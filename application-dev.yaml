@@ -1,0 +1,42 @@
+config:
+  qtd_lista_multithread: 4
+  request:
+    retry_times: 3
+    timeout: 60
+    sleep: 2
+  filenames:
+    consolidate: 'CONSOLIDADA'
+  logging:
+    level: 'DEBUG' # níveis de log para escolher -> 'INFO'
+    filename: 'log_monitoracao_contas'
+email:
+  host_smtp: 'smtp-mail.outlook.com'
+  port: 587
+  titulo: 'MONITORACAO CONTAS CQG - ERRO'
+  distribuidor:
+    login: 'robo-rpg-cqg@outlook.com'
+    senha: '1q2w3e4r5t'
+  recebedores: 'robo-rpg-cqg@outlook.com, igor.reis@dclick.com.br'
+request:
+  rest:
+    sca:
+      usuarios:
+        url: 'https://webapp2.queirozgalvao.com/scaapi/usuarios/ativos'
+        token_authorizaton: '28568c1eb8a4b41bbcb69b9b977544c'
+      grupos_associados: 'https://webapp.queirozgalvao.com/ldapws/rest/listarGruposDoUsuario'
+    protheus:
+      - { engetec: { url: 'http://prop12engetec.queirozgalvao.com:8112/rest/BB/WSEMPRESA/acessos', header: 'BB,2C' } }
+      - { ambiental: { url: 'http://prop12ambiental.queirozgalvao.com:8112/rest/AB/WSEMPRESA/acessos', header: 'AB,1V' } }
+      - { cqg: { url: 'http://prop12cqg.queirozgalvao.com:8112/rest/AA/WSEMPRESA/acessos', header: 'AA,K0' } }
+  soap:
+    fluig:
+      urls:
+        - { cqg: { usuarios: 'https://minhacqg.queirozgalvao.com/webdesk/ECMDatasetService', grupos_associados: 'https://minhacqg.queirozgalvao.com/webdesk/ECMDatasetService' } }
+        - { engetec: { usuarios: 'https://minhaengetec.engetecbrasil.com/webdesk/ECMDatasetService', grupos_associados: 'https://minhaengetec.engetecbrasil.com/webdesk/ECMDatasetService' } }
+    rm:
+      urls:
+        - { cqg: { usuarios: 'http://rmftbc.queirozgalvao.com:8053/wsConsultaSQL/IwsConsultaSQL' } }
+        - { engetec: { usuarios: 'http://rmftbc.engetecbrasil.com:8053/wsConsultaSQL/IwsConsultaSQL' } }
+      header:
+        soap_action: 'http://www.totvs.com/IwsConsultaSQL/RealizarConsultaSQL'
+        token_authorization: { username: 'totvs.rm.tbc', password: 'admservicos' }
