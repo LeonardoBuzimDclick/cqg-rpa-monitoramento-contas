@@ -1,0 +1,1 @@
+pasta criada para inserção de logs
