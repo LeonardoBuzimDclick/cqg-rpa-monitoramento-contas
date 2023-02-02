@@ -99,7 +99,7 @@ def transforma_xml_em_dict(coluna_soap: list, usuario_soap: list) -> list[dict[s
     return usuarios_dict_list
 
 
-def request_rest_get_base(url: str, header: dict) -> dict:
+def request_rest_get_base(url: str, header=None) -> dict:
     """
     Esta função transforma um json em dicionário.
     :param url: (str): recebe um endpoint.
