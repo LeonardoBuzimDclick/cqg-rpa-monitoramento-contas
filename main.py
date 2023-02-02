@@ -1,11 +1,11 @@
 import logging
 import sys
 from datetime import datetime
-import requests
-import json
 
 from config.config_yaml import busca_valor_yaml
 from config.log_config import ajusta_config_logging
+from config.request_config import request_rest_get_base
+from create_files.create_file_csv import ler_arquivo_consolidada
 from requests_service.mail.send_email import send_email
 from requests_service.main_request_ambientes import busca_usuarios_ativos_nos_ambientes
 
@@ -35,30 +35,98 @@ def metodo_principal_execucao():
         sys.exit(-1)
 
 
-def obter_gestores_seus_colaboradores_associados():
+def obter_gestores_seus_colaboradores_associados(url: str, tenant: str) -> list:
+    response = request_rest_get_base(url)
 
-    request = requests.get('https://cqghom.queirozgalvao.com/corp-web/rest/organograma/obter/43701')
+    gestores_lista = []
+    gestores_com_colaboradores = []
+    usuarios_lista = [response] if type(response) == dict else response if type(response) == list else []
+    for usuario in usuarios_lista:
+        if 'colaboradores' in usuario:
+            gestores_lista.append(usuario)
+        elif 'filhos' in usuario:
+            for u in usuario['filhos']:
+                usuarios_lista.append(u)
+        else:
+            logging.warning(f'usuario quebrado: {usuario}')
 
-    response = json.loads(request.content)
-    
+    for gestor in gestores_lista:
+        colaboradores_lista = []
+        for colaborador in gestor['colaboradores']:
+            colaborador_final = {
+                'sig_usuario': colaborador['sig_usuario'],
+                'email': '' if not colaborador['email'] else colaborador['email']
+            }
+            colaboradores_lista.append(colaborador_final)
 
-    gestores_lista = response['filhos'][0]['filhos']
+        gestor_final = {
+            'sig_usuario': gestor['SIG_USUARIO'],
+            'email': '' if not gestor['TXT_EMAIL'] else gestor['TXT_EMAIL'],
+            'sig_estr_organizacional': gestor['SIG_ESTR_ORGANIZACIONAL'],
+            'colaboradores': colaboradores_lista
+        }
+        gestores_com_colaboradores.append(gestor_final)
 
-    colaboradores_lista = response['filhos'][0]['filhos'][0]
-    for i in response['filhos'].get:
-        print(type(i))
+    return gestores_com_colaboradores
 
 
-    # gestores = {'SIG_USUARIO': dic['SIG_USUARIO'] for dic in response['filhos'][0][0]}
-    #
-    # colaboradores = {dic['filhos'] for dic in response['filhos']}
-    #
-    # print(gestores)
+def checa_colaboradores_em_corpweb(gestores: list[dict]) -> list[dict]:
+    ini = datetime.now()
+    usuarios = ler_arquivo_consolidada()
+    if len(usuarios) < len(gestores):
+        for usuario in usuarios:
+            for gestor in gestores:
+                if gestor['ambiente'] == usuario['ambiente']:
+                    for colaborador in gestor['gestor_colaboradores']['colaboradores']:
+                        if usuario['sig_usuario'] == colaborador['sig_usuario'] or \
+                                usuario['email'] == colaborador['email']:
+                            usuarios.remove(usuario)
+                            logging.info(f'usuario está corpweb: {usuario}')
+                            break
+                        else:
+                            print(f'usuario: {usuario}')
+                            print(f'colaborador: {colaborador}')
+                    break
+    else:
+        for gestor in gestores:
+            for usuario in usuarios:
+                isBreak = False
+                if gestor['ambiente'] == usuario['ambiente']:
+                    for colaborador in gestor['gestor_colaboradores']['colaboradores']:
+                        if usuario['sig_usuario'] == colaborador['sig_usuario'] or \
+                                usuario['email'] == colaborador['email']:
+                            usuarios.remove(usuario)
+                            isBreak = True
+                            logging.info(f'usuario está corpweb: {usuario}')
+                            break
+                        else:
+                            print(f'usuario: {usuario}')
+                            print(f'colaborador: {colaborador}')
+                    if isBreak:
+                        break
+    fim = datetime.now()
+    print(f'tempo exec loop: {fim - ini}')
+    return usuarios
 
 
 if __name__ == '__main__':
-    obter_gestores_seus_colaboradores_associados()
+
     # metodo_principal_execucao()
 
+    parametros = {'cqg': '43542'}
+    url = 'https://cqghom.queirozgalvao.com/corp-web/rest/organograma/obter/'
+    gestores_colaborares_por_ambiente_list = []
+    for chave, valor in parametros.items():
+        url_parametrizada = url+valor
 
+        gestores_colaborares_por_ambiente = {
+            'ambiente': chave,
+            'gestor_colaboradores': obter_gestores_seus_colaboradores_associados(url, chave)
+        }
+
+        gestores_colaborares_por_ambiente_list.append(gestores_colaborares_por_ambiente)
+        usuarios = checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
+        print(len(usuarios))
+        for usuario in usuarios:
+            print(usuario)
 
