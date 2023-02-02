@@ -33,10 +33,14 @@ def continua_arquivo_csv(header: list, list_rows: list, filename: str) -> None:
             writer.writerow(row)
 
 
+def retorna_nome_arquivo_consolidada() -> str:
+    config = busca_valor_yaml()
+    return f'{config["config"]["filenames"]["consolidate"]}.csv'
+
+
 def monta_arquivo_consolidado(header: list, list_rows: list):
 
-    config = busca_valor_yaml()
-    filename = f'{config["config"]["filenames"]["consolidate"]}.csv'
+    filename = retorna_nome_arquivo_consolidada()
     arquivo_listas = listar_diretorio_csv()
     if arquivo_listas.count(filename) == 0:
         criar_arquivo_csv(header, list_rows, f'csv/{filename}')
@@ -82,3 +86,13 @@ def listar_diretorio_csv():
             res.append(path)
     return res
 
+
+def ler_arquivo_consolidada() -> list[dict]:
+
+    filename = f'csv/{retorna_nome_arquivo_consolidada()}'
+    with open(filename, newline='') as filecsv:
+        reader = csv.DictReader(f=filecsv, delimiter=';')
+        linhas = []
+        for row in reader:
+            linhas.append(row)
+        return linhas
