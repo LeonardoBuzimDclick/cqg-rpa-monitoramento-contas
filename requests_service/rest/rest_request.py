@@ -78,10 +78,11 @@ def get_usuarios_ativos_grupos_associados_sca(url_sca: str, token_usuario: str, 
     usuarios_consolidados = []
     headers_consolidados = []
     for usuario in usuarios:
-        usuario_consolidado = {'email': usuario['email'],
+        usuario_consolidado = {'sig_usuario': usuario['sigUsuario'] if usuario['sigUsuario'] else '',
+                               'email': usuario['email'] if usuario['email'] else '',
                                'sistema': 'SCA',
                                'ambiente': 'SCA',
-                               'perfil': usuario['grupos']}
+                               'perfil': usuario['grupos'] if usuario['grupos'] else []}
         if not headers_consolidados:
             for chave, value in usuario_consolidado.items():
                 headers_consolidados.append(chave)
@@ -139,10 +140,11 @@ def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
     usuarios_consolidados = []
     headers_consolidados = []
     for usuario in resultado:
-        usuario_consolidado = {'email': usuario['EMAIL_USUARIO'],
+        usuario_consolidado = {'sig_usuario': usuario['LOGIN_USUARIO'] if usuario['LOGIN_USUARIO'] else '',
+                               'email': usuario['EMAIL_USUARIO'] if usuario['EMAIL_USUARIO'] else '',
                                'sistema': 'PROTHEUS',
                                'ambiente': tenant,
-                               'perfil': usuario['GRUPOS']}
+                               'perfil': usuario['GRUPOS'] if usuario['GRUPOS'] else []}
         if not headers_consolidados:
             for chave, value in usuario_consolidado.items():
                 headers_consolidados.append(chave)
