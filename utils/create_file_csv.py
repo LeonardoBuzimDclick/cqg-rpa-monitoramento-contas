@@ -34,11 +34,20 @@ def continua_arquivo_csv(header: list, list_rows: list, filename: str) -> None:
 
 
 def retorna_nome_arquivo_consolidada() -> str:
+    """
+    Esta função apenas retorna o nome do arquivo consolidade.
+    :return: retorna o nome do arquivo consolidade.
+    """
     config = busca_valor_yaml()
     return f'{config["config"]["filenames"]["consolidate"]}.csv'
 
 
-def monta_arquivo_consolidado(header: list, list_rows: list):
+def monta_arquivo_consolidado(header: list, list_rows: list) -> object:
+    """
+    Esta função monta um arquivo consolidado.
+    :param header: (list): colunas do arquivo.
+    :param list_rows: (list): linhas do arquivo.
+    """
 
     filename = retorna_nome_arquivo_consolidada()
     arquivo_listas = listar_diretorio_csv()
@@ -49,6 +58,10 @@ def monta_arquivo_consolidado(header: list, list_rows: list):
 
 
 def retorna_nomes_arquivos_em_lista_ambiente() -> dict[str, list[str]]:
+    """
+    Esta função retorna nomes dos arquivos para seus respectivos ambientes.
+    :return: retorna o nome dos arquivos para seus respectivos ambientes.
+    """
     ambiente = {}
     rm_lista = []
     sca_lista = []
@@ -80,6 +93,9 @@ def retorna_nomes_arquivos_em_lista_ambiente() -> dict[str, list[str]]:
 
 
 def listar_diretorio_csv():
+    """
+    Esta função lista a diretoria.
+    """
     res = []
     for path in os.listdir('csv/'):
         if os.path.isfile(os.path.join('csv/', path)):
@@ -88,6 +104,10 @@ def listar_diretorio_csv():
 
 
 def ler_arquivo_consolidada() -> list[dict]:
+    """
+    Esta função ler o arquivo consolidade.
+    :return: retorna as linhas.
+    """
 
     filename = f'csv/{retorna_nome_arquivo_consolidada()}'
     with open(filename, newline='') as filecsv:
