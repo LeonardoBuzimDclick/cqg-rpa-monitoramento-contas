@@ -126,6 +126,7 @@ def request_rest_get_base(url: str, header=None) -> dict:
                 continue
 
             logging.debug("-----Fim do metodo get base-----")
+            logging.debug(f"-----Tempo de requisição foi: {response.elapsed}-----")
             return json.loads(response.text)
 
         except requests.exceptions.RequestException as e:

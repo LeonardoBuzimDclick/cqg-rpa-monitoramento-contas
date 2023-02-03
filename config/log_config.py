@@ -2,13 +2,15 @@ import logging
 import sys
 from datetime import datetime
 
+from config.config_yaml import busca_valor_yaml
 
-def ajusta_config_logging(config: dict):
+
+def ajusta_config_logging() -> None:
     """
     Esta função ajusta a configuração dos logging.
-    :param config: (dict): recebe um configuração.
     """
-    filename = f'logs/{config["config"]["logging"]["filename"]}-{datetime.now().strftime("%Y%m%dT%H%M%SZ")}.log'
+    config = busca_valor_yaml()
+    filename = f'logs/{config["config"]["logging"]["filename"]}_{datetime.now().strftime("%Y%m%dT%H%M%SZ")}.log'
 
     logging.basicConfig(filename=filename,
                         level=config["config"]["logging"]["level"],
@@ -22,7 +24,10 @@ def ajusta_config_logging(config: dict):
     logging.info(f'A monitoração de contas foi iniciada no perfil: {sys.argv[1]}')
 
 
-def bot_text_art():
+def bot_text_art() -> None:
+    """
+    Esta função imprime o bot.
+    """
     logging.info("    ____     ")
     logging.info("   [____]    ")
     logging.info(" |=]()()[=|  ")
