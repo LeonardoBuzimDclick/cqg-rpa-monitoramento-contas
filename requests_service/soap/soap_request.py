@@ -55,7 +55,7 @@ def busca_usuarios_ativos_e_grupos_associados_fluig(url_fluig: str, body_fluig: 
                 grupos_associados.append(grupo['colleagueGroupPK.groupId'])
 
         usuario_consolidado['sig_usuario'] = ''
-        usuario_consolidado['email'] = usuario['mail'] if usuario['mail'] else ''
+        usuario_consolidado['email'] = usuario['mail'].upper() if usuario['mail'] else ''
         usuario_consolidado['sistema'] = 'FLUIG'
         usuario_consolidado['ambiente'] = tenant
         usuario_consolidado['perfil'] = grupos_associados
@@ -111,8 +111,8 @@ def busca_usuarios_ativos_rm(url_rm: str, body_rm: dict, soap_action: str, token
             logging.warning(
                 f'Não foram encontradas os cabeçalhos EMAIL ou SISTEMA no retorno - RM - {tenant} - {usuario["CODUSUARIO"]}')
             continue
-        usuario_consolidado = {'sig_usuario': usuario['CODUSUARIO'] if usuario['CODUSUARIO'] else '',
-                               'email': usuario['EMAIL'] if usuario['EMAIL'] else '',
+        usuario_consolidado = {'sig_usuario': usuario['CODUSUARIO'].upper() if usuario['CODUSUARIO'] else '',
+                               'email': usuario['EMAIL'].upper() if usuario['EMAIL'] else '',
                                'sistema': 'RM',
                                'ambiente': tenant,
                                'perfil': usuario['SISTEMA'] if usuario['SISTEMA'] else []}
@@ -128,7 +128,7 @@ def busca_usuarios_ativos_rm(url_rm: str, body_rm: dict, soap_action: str, token
         for usuario in usuario_list:
             perfil.append(usuario['perfil'])
 
-        usuario_consolidado = {'email': usuario_list[0]['email'],
+        usuario_consolidado = {'email': usuario_list[0]['email'].upper(),
                                'sistema': 'RM',
                                'ambiente': tenant,
                                'perfil': perfil}

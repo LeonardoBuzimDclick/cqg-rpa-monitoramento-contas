@@ -6,7 +6,7 @@ from itertools import chain
 
 from config.request_config import request_rest_get_base, request_rest_post_base
 from utils.create_file_csv import ler_arquivo_consolidada, monta_arquivo_consolidado, criar_arquivo_csv
-from utils.listas_utils import separa_listas
+from utils.listas_utils import separa_listas, agrupa_listas_consolidada
 
 
 def get_usuarios_ativos_sca(url: str, token: str) -> list[dict]:
@@ -80,8 +80,8 @@ def get_usuarios_ativos_grupos_associados_sca(url_sca: str, token_usuario: str, 
     usuarios_consolidados = []
     headers_consolidados = []
     for usuario in usuarios:
-        usuario_consolidado = {'sig_usuario': usuario['sigUsuario'] if usuario['sigUsuario'] else '',
-                               'email': usuario['email'] if usuario['email'] else '',
+        usuario_consolidado = {'sig_usuario': usuario['sigUsuario'].upper() if usuario['sigUsuario'] else '',
+                               'email': usuario['email'].upper() if usuario['email'] else '',
                                'sistema': 'SCA',
                                'ambiente': 'SCA',
                                'perfil': usuario['grupos'] if usuario['grupos'] else []}
@@ -129,8 +129,8 @@ def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
             logging.info(f'o usuario {usuario["LOGIN_USUARIO"]} não é ativo')
             continue
 
-        usuario_consolidado = {'sig_usuario': usuario['LOGIN_USUARIO'] if usuario['LOGIN_USUARIO'] else '',
-                               'email': usuario['EMAIL_USUARIO'] if usuario['EMAIL_USUARIO'] else '',
+        usuario_consolidado = {'sig_usuario': usuario['LOGIN_USUARIO'].upper() if usuario['LOGIN_USUARIO'] else '',
+                               'email': usuario['EMAIL_USUARIO'].upper() if usuario['EMAIL_USUARIO'] else '',
                                'sistema': 'PROTHEUS',
                                'ambiente': tenant,
                                'perfil': usuario['GRUPOS'] if usuario['GRUPOS'] else []}
@@ -198,15 +198,17 @@ def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> list[dict]:
     :return: retorna os usuários.
     """
     usuarios = ler_arquivo_consolidada()
+    usuarios_agrupados = agrupa_listas_consolidada(usuarios)
+
     for gestores_dict in ambiente_gestores:
         for ambiente, gestores in gestores_dict.items():
             for gestor in gestores:
                 for usuario in usuarios:
                     isBreak = False
-                    if ambiente == usuario['ambiente']:
+                    if ambiente.upper() == usuario['ambiente']:
                         for colaborador in gestor['gestor_colaboradores']['colaboradores']:
-                            if usuario['sig_usuario'] == colaborador['sig_usuario'] or \
-                                    usuario['email'] == colaborador['email']:
+                            if usuario['sig_usuario'] == colaborador['sig_usuario'].upper() or \
+                                    usuario['email'] == colaborador['email'].upper():
                                 usuarios.remove(usuario)
                                 isBreak = True
                                 logging.info(f'usuario está corpweb: {usuario}')
