@@ -1,11 +1,10 @@
 import base64
 import datetime
 import logging
-from collections import defaultdict
-from itertools import groupby
 
 from config.request_config import request_post_soap_base
-from create_files import create_file_csv
+from utils.create_file_csv import monta_arquivo_consolidado, criar_arquivo_csv
+from utils.listas_utils import agrupa_listas_rm
 
 
 def request_usuario_fluig(url: str, body: dict) -> list[dict[str, any]]:
@@ -73,9 +72,9 @@ def busca_usuarios_ativos_e_grupos_associados_fluig(url_fluig: str, body_fluig: 
     logging.info(
         f"-----Termino da busca dos usuarios ativos no fluig no ambiente {tenant} com {len(usuarios_list)} dados-----")
     logging.debug(f"-----Inicio da escrita dos usuarios ativos do fluig do ambiente {tenant} no CSV -----")
-    create_file_csv.monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
-    create_file_csv.criar_arquivo_csv(header, usuarios_list,
-                                      f'csv/usuarios_fluig_{tenant}_{datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")}.csv')
+    monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
+    criar_arquivo_csv(header, usuarios_list,
+                                      f'csv/usuarios_fluig_{tenant}_{datetime.now().strftime("%Y%m%dT%H%M%SZ")}.csv')
     logging.debug(f"-----Termino da escrita dos usuarios ativos do fluig do ambiente {tenant} no CSV -----")
 
 
@@ -139,20 +138,8 @@ def busca_usuarios_ativos_rm(url_rm: str, body_rm: dict, soap_action: str, token
     logging.info(
         f"-----Termino da busca dos usuarios ativos no rm no ambiente {tenant} com {len(usuarios_consolidados)} dados-----")
     logging.debug(f"-----Inicio da escrita dos usuarios ativos do rm do ambiente {tenant} no CSV -----")
-    date_files = datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")
-    create_file_csv.monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
-    create_file_csv.criar_arquivo_csv(header, response,
+    date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+    monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
+    criar_arquivo_csv(header, response,
                                       f'csv/usuario_rm_{tenant}_{date_files}.csv')
     logging.debug(f"-----Termino da escrita dos usuarios ativos do rm do ambiente {tenant} no CSV-----")
-
-
-def agrupa_listas_rm(list_dict: list) -> list:
-    INFO = sorted(list_dict, key=key_func)
-    resutado = []
-    for key, value in groupby(INFO, key_func):
-        resutado.append(list(value))
-    return resutado
-
-
-def key_func(k):
-    return k['email']

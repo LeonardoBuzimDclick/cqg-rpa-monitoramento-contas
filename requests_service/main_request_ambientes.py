@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from create_files.create_file_csv import retorna_nomes_arquivos_em_lista_ambiente
+from utils.create_file_csv import retorna_nomes_arquivos_em_lista_ambiente
 from requests_service.rest.rest_request import get_usuarios_ativos_grupos_associados_sca, request_protheus
 from requests_service.soap.body_xml import consulta_usuarios_ativos_fluig, consulta_usuarios_grupos_fluig, \
     obter_dados_usuarios_ativos_rm_seus_grupos
@@ -14,6 +14,7 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> None:
     :param config: (dict): recebe as configurações do sistema.
     :return: retorna o numero onde parou a tarefa.
     """
+    logging.info(f'-----Inicio da fase 1 [coleta]-----')
     arquivos_criados = retorna_nomes_arquivos_em_lista_ambiente()
     try:
         data_ini = datetime.now()
@@ -109,5 +110,6 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> None:
         data_fim = datetime.now()
         time_diff = data_fim - data_ini
         logging.debug(f'O tempo total de execução de busca no rm foi: {time_diff}')
+        logging.info('-----Termino da fase 1 [coleta]-----')
     except Exception as e:
         logging.warning(e)

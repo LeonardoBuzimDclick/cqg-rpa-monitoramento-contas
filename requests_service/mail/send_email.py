@@ -4,6 +4,11 @@ from email.message import EmailMessage
 
 
 def send_email(config_email: dict, message: str) -> None:
+    """
+    Esta função envia uma messagem para email destinado.
+    :param config_email: (dict): configuração do email.
+    :param message: (str): menssagem a ser passada.
+    """
     msg = EmailMessage()
     msg['Subject'] = config_email['titulo']
     msg['From'] = config_email['distribuidor']['login']

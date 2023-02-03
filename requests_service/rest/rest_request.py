@@ -1,10 +1,12 @@
 import datetime
 import logging
 import threading
+from datetime import datetime
 from itertools import chain
 
 from config.request_config import request_rest_get_base, request_rest_post_base
-from create_files import create_file_csv
+from utils.create_file_csv import ler_arquivo_consolidada, monta_arquivo_consolidado, criar_arquivo_csv
+from utils.listas_utils import separa_listas
 
 
 def get_usuarios_ativos_sca(url: str, token: str) -> list[dict]:
@@ -88,29 +90,11 @@ def get_usuarios_ativos_grupos_associados_sca(url_sca: str, token_usuario: str, 
                 headers_consolidados.append(chave)
         usuarios_consolidados.append(usuario_consolidado)
 
-    date_file = datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")
-    create_file_csv.monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
-    create_file_csv.criar_arquivo_csv(header, usuarios,
+    date_file = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+    monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
+    criar_arquivo_csv(header, usuarios,
                                       f'csv/usuarios_sca_{date_file}.csv')
     logging.info("-----Termino da busca dos usuarios ativos no SCA e seus grupos associados-----")
-
-
-def separa_listas(seq: list[any], num: int) -> list[list]:
-    """
-    Esta função separa listas em páginas.
-    :param seq: (list): recebe uma lista como parâmetro.
-    :param num: (int): recebe um valor que define em quantas páginas será separada.
-    :return: retorna uma lista separa em páginas.
-    """
-    avg = len(seq) / float(num)
-    out = []
-    last = 0.0
-
-    while last < len(seq):
-        out.append(seq[int(last):int(last + avg)])
-        last += avg
-
-    return out
 
 
 def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
@@ -140,6 +124,11 @@ def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
     usuarios_consolidados = []
     headers_consolidados = []
     for usuario in resultado:
+
+        if usuario['STATUS_USUARIO'] != 'ATIVO':
+            logging.info(f'o usuario {usuario["LOGIN_USUARIO"]} não é ativo')
+            continue
+
         usuario_consolidado = {'sig_usuario': usuario['LOGIN_USUARIO'] if usuario['LOGIN_USUARIO'] else '',
                                'email': usuario['EMAIL_USUARIO'] if usuario['EMAIL_USUARIO'] else '',
                                'sistema': 'PROTHEUS',
@@ -150,10 +139,103 @@ def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
                 headers_consolidados.append(chave)
         usuarios_consolidados.append(usuario_consolidado)
 
-    date_files = datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")
+    date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
     logging.debug(f"-----Inicio da escrita dos usuarios ativos do Protheus do ambiente {tenant} no CSV -----")
-    create_file_csv.monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
-    create_file_csv.criar_arquivo_csv(header_file, response['mensagem'],
+    monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
+    criar_arquivo_csv(header_file, response['mensagem'],
                                       f'csv/usuarios_protheus_{tenant}_{date_files}.csv')
 
     logging.debug(f"-----Termino da escrita dos usuarios ativos do Protheus do ambiente {tenant} no CSV-----")
+
+
+def obter_gestores_seus_colaboradores_associados(url: str, tenant: str) -> list:
+    """
+    Esta função obtém os dados dos gestores e seus colaboradores associados.
+    :param url: (str): recebe o endpoint dp corp-web.
+    :param tenant: (str): recebe o ambiente.
+    :return: retorna os gestores com seus colaboradores associados.
+    """
+    logging.info(f'-----inicio request corp-web-{tenant}-----')
+    response = request_rest_get_base(url)
+    logging.info(f'-----término request corp-web-{tenant}-----')
+
+    gestores_lista = []
+    gestores_com_colaboradores = []
+    usuarios_lista = [response] if type(response) == dict else response if type(response) == list else []
+    for usuario in usuarios_lista:
+        if 'colaboradores' in usuario:
+            gestores_lista.append(usuario)
+        elif 'filhos' in usuario:
+            for u in usuario['filhos']:
+                usuarios_lista.append(u)
+        else:
+            logging.warning(f'usuario quebrado: {usuario}')
+
+    for gestor in gestores_lista:
+        colaboradores_lista = []
+        for colaborador in gestor['colaboradores']:
+            colaborador_final = {
+                'sig_usuario': colaborador['sig_usuario'],
+                'email': '' if not colaborador['email'] else colaborador['email']
+            }
+            colaboradores_lista.append(colaborador_final)
+
+        gestor_final = {
+            'sig_usuario': gestor['SIG_USUARIO'],
+            'email': '' if not gestor['TXT_EMAIL'] else gestor['TXT_EMAIL'],
+            'sig_estr_organizacional': gestor['SIG_ESTR_ORGANIZACIONAL'],
+            'colaboradores': colaboradores_lista
+        }
+        gestores_com_colaboradores.append(gestor_final)
+
+    return gestores_com_colaboradores
+
+
+def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> list[dict]:
+    """
+    Esta função checa cada colaborador em corpweb.
+    :param ambiente_gestores: recebe uma lista de gestores com o seu ambiente como chave.
+    :return: retorna os usuários.
+    """
+    usuarios = ler_arquivo_consolidada()
+    for gestores_dict in ambiente_gestores:
+        for ambiente, gestores in gestores_dict.items():
+            for gestor in gestores:
+                for usuario in usuarios:
+                    isBreak = False
+                    if ambiente == usuario['ambiente']:
+                        for colaborador in gestor['gestor_colaboradores']['colaboradores']:
+                            if usuario['sig_usuario'] == colaborador['sig_usuario'] or \
+                                    usuario['email'] == colaborador['email']:
+                                usuarios.remove(usuario)
+                                isBreak = True
+                                logging.info(f'usuario está corpweb: {usuario}')
+                                break
+                            else:
+                                logging.info(f'usuario: {usuario}')
+                                logging.info(f'colaborador: {colaborador}')
+                        if isBreak:
+                            break
+    return usuarios
+
+
+def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: dict, url: dict) -> None:
+    """
+    Esta função busca os gestores e seus colaboradores associado no corp web é checa o arquivo consolidado.
+    """
+    logging.info('-----Inicio da fase 2 [agrupamento]-----')
+    parametros = parametros['request']['rest']['corp_web']['usuarios']['parametros']
+    url = url['request']['rest']['corp_web']['usuarios']['url']
+    gestores_colaborares_por_ambiente_list = []
+    for ambiente, codigo in parametros.items():
+        url_parametrizada = f'{url}{codigo}'
+
+        gestores_colaborares_por_ambiente = {
+            ambiente: obter_gestores_seus_colaboradores_associados(url_parametrizada, ambiente)
+        }
+
+        gestores_colaborares_por_ambiente_list.append(gestores_colaborares_por_ambiente)
+
+    usuarios = checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
+    logging.info('-----Termino da fase 2 [agrupamento]-----')
+
