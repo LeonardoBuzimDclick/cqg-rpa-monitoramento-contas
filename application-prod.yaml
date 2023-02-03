@@ -28,6 +28,15 @@ request:
       - { engetec: { url: 'http://prop12engetec.queirozgalvao.com:8112/rest/BB/WSEMPRESA/acessos', header: 'BB,2C' } }
       - { ambiental: { url: 'http://prop12ambiental.queirozgalvao.com:8112/rest/AB/WSEMPRESA/acessos', header: 'AB,1V' } }
       - { cqg: { url: 'http://prop12cqg.queirozgalvao.com:8112/rest/AA/WSEMPRESA/acessos', header: 'AA,K0' } }
+    corp_web:
+      usuarios:
+        parametros:
+          FRONTIS: 43871
+          ENGETEC: 43701
+          ALYA: 43542
+          AMBIENTAL: 43209
+          CQG: 43560
+        url: 'https://cqghom.queirozgalvao.com/corp-web/rest/organograma/obter/'
   soap:
     fluig:
       urls:
