@@ -32,10 +32,6 @@ def agrupa_listas_consolidada(list_dict: list) -> list:
 
         usuario_agrupado_sig_usuario = {}
         for value in list(values):
-
-            if value['sistema'] == 'PROTHEUS':
-                print('para aqui ')
-
             usuario_agrupado_sig_usuario = {
                 'sig_usuario': checa_chave_e_retorna_mesma_string('sig_usuario', usuario_agrupado_sig_usuario, value),
                 'email':  checa_chave_e_retorna_mesma_string('email', usuario_agrupado_sig_usuario, value),

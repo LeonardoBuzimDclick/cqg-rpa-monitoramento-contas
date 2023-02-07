@@ -119,7 +119,8 @@ def ler_arquivo_consolidada() -> list[dict]:
                 'email': row['email'],
                 'sistema': row['sistema'],
                 'ambiente': row['ambiente'],
-                'perfil': row['perfil'].replace('[', '').replace(']', '').split(',')
+                'perfil': row['perfil'].replace('[', '').replace(']', '').split(',') if ',' in row['perfil']
+                else row['perfil']
             }
             linhas.append(linha)
         return linhas

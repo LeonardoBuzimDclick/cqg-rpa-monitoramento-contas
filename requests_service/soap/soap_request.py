@@ -115,7 +115,7 @@ def busca_usuarios_ativos_rm(url_rm: str, body_rm: dict, soap_action: str, token
                                'email': usuario['EMAIL'].upper() if usuario['EMAIL'] else '',
                                'sistema': 'RM',
                                'ambiente': tenant,
-                               'perfil': ','.join(usuario['SISTEMA']) if usuario['SISTEMA'] else ''}
+                               'perfil': usuario['SISTEMA'] if usuario['SISTEMA'] else ''}
         usuarios_consolidados_disperso.append(usuario_consolidado)
         if not headers_consolidados:
             for chave, value in usuario_consolidado.items():
@@ -128,7 +128,8 @@ def busca_usuarios_ativos_rm(url_rm: str, body_rm: dict, soap_action: str, token
         for usuario in usuario_list:
             perfil.append(usuario['perfil'])
 
-        usuario_consolidado = {'email': usuario_list[0]['email'].upper(),
+        usuario_consolidado = {'sig_usuario': usuario_list[0]['sig_usuario'].upper(),
+                               'email': usuario_list[0]['email'].upper(),
                                'sistema': 'RM',
                                'ambiente': tenant,
                                'perfil': perfil}
