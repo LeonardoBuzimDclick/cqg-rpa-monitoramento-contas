@@ -84,7 +84,7 @@ def get_usuarios_ativos_grupos_associados_sca(url_sca: str, token_usuario: str, 
                                'email': usuario['email'].upper() if usuario['email'] else '',
                                'sistema': 'SCA',
                                'ambiente': 'SCA',
-                               'perfil': usuario['grupos'] if usuario['grupos'] else []}
+                               'perfil': ','.join(usuario['grupos']) if usuario['grupos'] else ''}
         if not headers_consolidados:
             for chave, value in usuario_consolidado.items():
                 headers_consolidados.append(chave)
@@ -133,7 +133,7 @@ def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
                                'email': usuario['EMAIL_USUARIO'].upper() if usuario['EMAIL_USUARIO'] else '',
                                'sistema': 'PROTHEUS',
                                'ambiente': tenant,
-                               'perfil': usuario['GRUPOS'] if usuario['GRUPOS'] else []}
+                               'perfil': usuario['GRUPOS'] if usuario['GRUPOS'] else ''}
         if not headers_consolidados:
             for chave, value in usuario_consolidado.items():
                 headers_consolidados.append(chave)
@@ -175,8 +175,8 @@ def obter_gestores_seus_colaboradores_associados(url: str, tenant: str) -> list:
         colaboradores_lista = []
         for colaborador in gestor['colaboradores']:
             colaborador_final = {
-                'sig_usuario': colaborador['sig_usuario'],
-                'email': '' if not colaborador['email'] else colaborador['email']
+                'sig_usuario': '' if not colaborador['sig_usuario'] else colaborador['sig_usuario'].upper(),
+                'email': '' if not colaborador['email'] else colaborador['email'].upper()
             }
             colaboradores_lista.append(colaborador_final)
 
@@ -203,22 +203,17 @@ def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> list[dict]:
     for gestores_dict in ambiente_gestores:
         for ambiente, gestores in gestores_dict.items():
             for gestor in gestores:
-                for usuario in usuarios:
-                    isBreak = False
-                    if ambiente.upper() == usuario['ambiente']:
-                        for colaborador in gestor['gestor_colaboradores']['colaboradores']:
-                            if usuario['sig_usuario'] == colaborador['sig_usuario'].upper() or \
-                                    usuario['email'] == colaborador['email'].upper():
-                                usuarios.remove(usuario)
-                                isBreak = True
-                                logging.info(f'usuario está corpweb: {usuario}')
-                                break
-                            else:
-                                logging.info(f'usuario: {usuario}')
-                                logging.info(f'colaborador: {colaborador}')
-                        if isBreak:
+                if len(gestor['colaboradores']) == 0:
+                    continue
+                for usuario in usuarios_agrupados:
+                    for colaborador in gestor['colaboradores']:
+                        if colaborador['sig_usuario'] != '' and colaborador['sig_usuario'] == usuario['sig_usuario'] or \
+                           colaborador['email'] != '' and colaborador['email'] == usuario['email']:
+                            usuarios_agrupados.remove(usuario)
+                            logging.debug(f'usuario está corpweb: {usuario}')
                             break
-    return usuarios
+
+    return usuarios_agrupados
 
 
 def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: dict, url: dict) -> None:
@@ -239,5 +234,13 @@ def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: 
         gestores_colaborares_por_ambiente_list.append(gestores_colaborares_por_ambiente)
 
     usuarios = checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
+
+    header_file = []
+    for chave, value in usuarios[0].items():
+        header_file.append(chave)
+    date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+    criar_arquivo_csv(header_file, usuarios,
+                      f'csv/CONSOLIDADA_POS_CORP_WEB_{date_files}.csv')
+
     logging.info('-----Termino da fase 2 [agrupamento]-----')
 

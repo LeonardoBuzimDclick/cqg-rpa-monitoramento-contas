@@ -1,6 +1,6 @@
 import base64
-import datetime
 import logging
+from datetime import datetime
 
 from config.request_config import request_post_soap_base
 from utils.create_file_csv import monta_arquivo_consolidado, criar_arquivo_csv
@@ -54,11 +54,11 @@ def busca_usuarios_ativos_e_grupos_associados_fluig(url_fluig: str, body_fluig: 
             if id == grupo['colleagueGroupPK.colleagueId']:
                 grupos_associados.append(grupo['colleagueGroupPK.groupId'])
 
-        usuario_consolidado['sig_usuario'] = ''
+        usuario_consolidado['sig_usuario'] = ''  # TODO aguardando clayton retornar para pegar esse dado
         usuario_consolidado['email'] = usuario['mail'].upper() if usuario['mail'] else ''
         usuario_consolidado['sistema'] = 'FLUIG'
         usuario_consolidado['ambiente'] = tenant
-        usuario_consolidado['perfil'] = grupos_associados
+        usuario_consolidado['perfil'] = ','.join(grupos_associados)
         usuario['grupos_associados'] = grupos_associados
         usuarios_consolidados.append(usuario_consolidado)
 
@@ -115,7 +115,7 @@ def busca_usuarios_ativos_rm(url_rm: str, body_rm: dict, soap_action: str, token
                                'email': usuario['EMAIL'].upper() if usuario['EMAIL'] else '',
                                'sistema': 'RM',
                                'ambiente': tenant,
-                               'perfil': usuario['SISTEMA'] if usuario['SISTEMA'] else []}
+                               'perfil': ','.join(usuario['SISTEMA']) if usuario['SISTEMA'] else ''}
         usuarios_consolidados_disperso.append(usuario_consolidado)
         if not headers_consolidados:
             for chave, value in usuario_consolidado.items():
@@ -140,6 +140,5 @@ def busca_usuarios_ativos_rm(url_rm: str, body_rm: dict, soap_action: str, token
     logging.debug(f"-----Inicio da escrita dos usuarios ativos do rm do ambiente {tenant} no CSV -----")
     date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
     monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
-    criar_arquivo_csv(header, response,
-                                      f'csv/usuario_rm_{tenant}_{date_files}.csv')
+    criar_arquivo_csv(header, response, f'csv/usuario_rm_{tenant}_{date_files}.csv')
     logging.debug(f"-----Termino da escrita dos usuarios ativos do rm do ambiente {tenant} no CSV-----")

@@ -114,5 +114,12 @@ def ler_arquivo_consolidada() -> list[dict]:
         reader = csv.DictReader(f=filecsv, delimiter=';')
         linhas = []
         for row in reader:
-            linhas.append(row)
+            linha = {
+                'sig_usuario': row['sig_usuario'],
+                'email': row['email'],
+                'sistema': row['sistema'],
+                'ambiente': row['ambiente'],
+                'perfil': row['perfil'].replace('[', '').replace(']', '').split(',')
+            }
+            linhas.append(linha)
         return linhas

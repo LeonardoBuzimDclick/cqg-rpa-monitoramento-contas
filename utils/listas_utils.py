@@ -1,3 +1,4 @@
+import operator
 from itertools import groupby
 
 
@@ -16,15 +17,75 @@ def agrupa_listas_rm(list_dict: list) -> list:
 
 def agrupa_listas_consolidada(list_dict: list) -> list:
     """
-    Esta função agrupa listas.
+    Esta função agrupa listas por determinada chave.
     :param list_dict: (list): recebe uma lista.
     :return: retorna um lista consolidada.
     """
-    INFO = sorted(list_dict, key=key_func_consolidada)
-    resutado = []
-    for key, value in groupby(INFO, key_func_consolidada):
-        resutado.append(list(value))
-    return resutado
+    chave_sig_usuario = operator.itemgetter("sig_usuario")
+    group_sig_usuario = sorted(list_dict, key=chave_sig_usuario)
+    usuario_agrupado_sig_usuario_list = []
+    for key, values in groupby(group_sig_usuario, chave_sig_usuario):
+        if key == '':
+            for value in list(values):
+                usuario_agrupado_sig_usuario_list.append(value)
+            continue
+
+        usuario_agrupado_sig_usuario = {}
+        for value in list(values):
+
+            if value['sistema'] == 'PROTHEUS':
+                print('para aqui ')
+
+            usuario_agrupado_sig_usuario = {
+                'sig_usuario': checa_chave_e_retorna_mesma_string('sig_usuario', usuario_agrupado_sig_usuario, value),
+                'email':  checa_chave_e_retorna_mesma_string('email', usuario_agrupado_sig_usuario, value),
+                'sistema': checa_chave_e_add_lista('sistema', usuario_agrupado_sig_usuario, value),
+                'ambiente': checa_chave_e_add_lista('ambiente', usuario_agrupado_sig_usuario, value),
+                'perfil': checa_chave_e_add_lista('perfil', usuario_agrupado_sig_usuario, value),
+            }
+
+        usuario_agrupado_sig_usuario_list.append(usuario_agrupado_sig_usuario)
+
+    chave_email = operator.itemgetter("email")
+    group_email = sorted(usuario_agrupado_sig_usuario_list, key=chave_email)
+    usuario_agrupado_email_list = []
+    for key, values in groupby(group_email, chave_email):
+        if key == '':
+            for value in list(values):
+                usuario_agrupado_email_list.append(value)
+            continue
+
+        usuario_agrupado_sig_usuario = {}
+        for value in list(values):
+            usuario_agrupado_sig_usuario = {
+                'sig_usuario': checa_chave_e_retorna_mesma_string('sig_usuario', usuario_agrupado_sig_usuario, value),
+                'email': checa_chave_e_retorna_mesma_string('email', usuario_agrupado_sig_usuario, value),
+                'sistema': checa_chave_e_add_lista('sistema', usuario_agrupado_sig_usuario, value),
+                'ambiente': checa_chave_e_add_lista('ambiente', usuario_agrupado_sig_usuario, value),
+                'perfil': checa_chave_e_add_lista('perfil', usuario_agrupado_sig_usuario, value),
+            }
+
+        usuario_agrupado_email_list.append(usuario_agrupado_sig_usuario)
+
+    return usuario_agrupado_email_list
+
+
+def checa_chave_e_retorna_mesma_string(chave: str, dicionario_alvo: dict, dicionario_recurso: dict):
+    if chave in dicionario_alvo:
+        return dicionario_alvo[chave]
+    else:
+        return dicionario_recurso[chave]
+
+
+def checa_chave_e_add_lista(chave: str, dicionario_alvo: dict, dicionario_recurso: dict):
+    if chave in dicionario_alvo:
+        dicionario_alvo[chave].append(dicionario_recurso[chave])
+        return dicionario_alvo[chave]
+    else:
+        if type(dicionario_recurso[chave]) == list:
+            return dicionario_recurso[chave]
+
+        return [dicionario_recurso[chave]]
 
 
 def key_func_consolidada(k: dict):

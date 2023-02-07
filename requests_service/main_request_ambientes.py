@@ -8,7 +8,7 @@ from requests_service.soap.body_xml import consulta_usuarios_ativos_fluig, consu
 from requests_service.soap.soap_request import busca_usuarios_ativos_e_grupos_associados_fluig, busca_usuarios_ativos_rm
 
 
-def busca_usuarios_ativos_nos_ambientes(config: dict) -> None:
+def busca_usuarios_ativos_nos_ambientes(config: dict) -> bool:
     """
     Esta função busca os usuários ativos nos ambientes.
     :param config: (dict): recebe as configurações do sistema.
@@ -16,6 +16,7 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> None:
     """
     logging.info(f'-----Inicio da fase 1 [coleta]-----')
     arquivos_criados = retorna_nomes_arquivos_em_lista_ambiente()
+    sca_ok = False
     try:
         data_ini = datetime.now()
         if not arquivos_criados['sca']:
@@ -24,15 +25,19 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> None:
                 token_usuario=config['request']['rest']['sca']['usuarios']['token_authorizaton'],
                 url_grupo_sca=config['request']['rest']['sca']['grupos_associados'],
                 divisao_listas=config['config']['qtd_lista_multithread'])
+            sca_ok = True
         else:
             logging.info('Como há arquivos SCA no diretório, o robô não enviou requisição para o SCA')
         data_fim = datetime.now()
         time_diff = data_fim - data_ini
         logging.debug(f'O tempo total de execução de busca no SCA foi: {time_diff}')
+        sca_ok = True
 
     except Exception as e:
+        sca_ok = False
         logging.warning(e)
 
+    protheus_ok = False
     try:
         data_ini = datetime.now()
         ambientes = config['request']['rest']['protheus']
@@ -54,10 +59,13 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> None:
         data_fim = datetime.now()
         time_diff = data_fim - data_ini
         logging.debug(f'O tempo total de execução de busca no protheus foi: {time_diff}')
+        protheus_ok = True
 
     except Exception as e:
+        protheus_ok = False
         logging.warning(e)
 
+    fluig_ok = False
     try:
         data_ini = datetime.now()
         ambientes = config['request']['soap']['fluig']['urls']
@@ -81,9 +89,12 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> None:
         data_fim = datetime.now()
         time_diff = data_fim - data_ini
         logging.debug(f'O tempo total de execução de busca no fluig foi: {time_diff}')
+        fluig_ok = True
     except Exception as e:
+        fluig_ok = False
         logging.warning(e)
 
+    rm_ok = False
     try:
         data_ini = datetime.now()
         ambientes = config['request']['soap']['rm']['urls']
@@ -110,6 +121,10 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> None:
         data_fim = datetime.now()
         time_diff = data_fim - data_ini
         logging.debug(f'O tempo total de execução de busca no rm foi: {time_diff}')
-        logging.info('-----Termino da fase 1 [coleta]-----')
+        rm_ok = True
     except Exception as e:
+        rm_ok = False
         logging.warning(e)
+
+    logging.info('-----Termino da fase 1 [coleta]-----')
+    return sca_ok and protheus_ok and fluig_ok and rm_ok
