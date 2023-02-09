@@ -6,7 +6,8 @@ from config.config_yaml import busca_valor_yaml
 from config.log_config import ajusta_config_logging
 from requests_service.mail.send_email import send_email
 from requests_service.main_request_ambientes import busca_usuarios_ativos_nos_ambientes
-from requests_service.rest.rest_request import busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado
+from requests_service.rest.rest_request import busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado, \
+    buscar_usuarios_grupos_associados_top
 
 
 def metodo_principal_execucao():
@@ -46,3 +47,4 @@ def metodo_principal_execucao():
 if __name__ == '__main__':
     ajusta_config_logging()
     metodo_principal_execucao()
+    # buscar_usuarios_grupos_associados_top("https://cqghom.queirozgalvao.com/top-web/rest/usuarios")

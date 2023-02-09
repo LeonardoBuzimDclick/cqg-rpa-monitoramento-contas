@@ -2,7 +2,8 @@ import logging
 from datetime import datetime
 
 from utils.create_file_csv import retorna_nomes_arquivos_em_lista_ambiente
-from requests_service.rest.rest_request import get_usuarios_ativos_grupos_associados_sca, request_protheus
+from requests_service.rest.rest_request import get_usuarios_ativos_grupos_associados_sca, request_protheus, \
+    buscar_usuarios_grupos_associados_top
 from requests_service.soap.body_xml import consulta_usuarios_ativos_fluig, consulta_usuarios_grupos_fluig, \
     obter_dados_usuarios_ativos_rm_seus_grupos
 from requests_service.soap.soap_request import busca_usuarios_ativos_e_grupos_associados_fluig, busca_usuarios_ativos_rm
@@ -126,5 +127,23 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> bool:
         rm_ok = False
         logging.warning(e)
 
+    top_ok = False
+    try:
+        data_ini = datetime.now()
+        if not arquivos_criados['top']:
+            buscar_usuarios_grupos_associados_top(url=config['request']['rest']['top']['url'])
+            top_ok = True
+        else:
+            logging.info('Como há arquivos TOP no diretório, o robô não enviou requisição para o TOP')
+        data_fim = datetime.now()
+        time_diff = data_fim - data_ini
+        logging.debug(f'O tempo total de execução de busca no TOP foi: {time_diff}')
+        top_ok = True
+
+    except Exception as e:
+        top_ok = False
+        logging.warning(e)
+
     logging.info('-----Termino da fase 1 [coleta]-----')
-    return sca_ok and protheus_ok and fluig_ok and rm_ok
+    return sca_ok and protheus_ok and fluig_ok and rm_ok and top_ok
+

@@ -6,7 +6,7 @@ from itertools import chain
 
 from config.request_config import request_rest_get_base, request_rest_post_base
 from utils.create_file_csv import ler_arquivo_consolidada, monta_arquivo_consolidado, criar_arquivo_csv
-from utils.listas_utils import separa_listas, agrupa_listas_consolidada
+from utils.listas_utils import separa_listas, agrupa_listas_consolidada, remove_duplicados
 
 
 def get_usuarios_ativos_sca(url: str, token: str) -> list[dict]:
@@ -92,8 +92,7 @@ def get_usuarios_ativos_grupos_associados_sca(url_sca: str, token_usuario: str, 
 
     date_file = datetime.now().strftime("%Y%m%dT%H%M%SZ")
     monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
-    criar_arquivo_csv(header, usuarios,
-                                      f'csv/usuarios_sca_{date_file}.csv')
+    criar_arquivo_csv(header, usuarios, f'csv/usuarios_sca_{date_file}.csv')
     logging.info("-----Termino da busca dos usuarios ativos no SCA e seus grupos associados-----")
 
 
@@ -143,7 +142,7 @@ def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
     logging.debug(f"-----Inicio da escrita dos usuarios ativos do Protheus do ambiente {tenant} no CSV -----")
     monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
     criar_arquivo_csv(header_file, response['mensagem'],
-                                      f'csv/usuarios_protheus_{tenant}_{date_files}.csv')
+                      f'csv/usuarios_protheus_{tenant}_{date_files}.csv')
 
     logging.debug(f"-----Termino da escrita dos usuarios ativos do Protheus do ambiente {tenant} no CSV-----")
 
@@ -208,7 +207,7 @@ def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> list[dict]:
                 for usuario in usuarios_agrupados:
                     for colaborador in gestor['colaboradores']:
                         if colaborador['sig_usuario'] != '' and colaborador['sig_usuario'] == usuario['sig_usuario'] or \
-                           colaborador['email'] != '' and colaborador['email'] == usuario['email']:
+                                colaborador['email'] != '' and colaborador['email'] == usuario['email']:
                             usuarios_agrupados.remove(usuario)
                             logging.debug(f'usuario está corpweb: {usuario}')
                             break
@@ -244,3 +243,43 @@ def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: 
 
     logging.info('-----Termino da fase 2 [agrupamento]-----')
 
+
+def buscar_usuarios_grupos_associados_top(url: str):
+    """
+    Esta função obtém os dados dos usuários e seus grupos associados
+    :param url:
+    :return:
+    """
+    response = request_rest_get_base(url=url)
+
+    response_list = list(response)
+
+    header = []
+    if not header:
+        for chave, value in response[0].items():
+            header.append(chave)
+
+    usuarios_consolidados_disperso = []
+
+    for usuario in response:
+        usuario_consolidado = {'sig_usuario': usuario['codUsuario'].upper() if usuario['codUsuario'] else '',
+                               'email': usuario['email'].upper() if usuario['email'] else '',
+                               'sistema': 'TOP',
+                               'ambiente': 'TOP',
+                               'perfil': usuario['codPerfil'].upper() if usuario['codPerfil'] else ''}
+
+        usuarios_consolidados_disperso.append(usuario_consolidado)
+
+    usuarios_consolidados = agrupa_listas_consolidada(usuarios_consolidados_disperso)
+
+    for usuario in usuarios_consolidados:
+        usuario['ambiente'] = 'TOP'
+        usuario['sistema'] = 'TOP'
+        usuario['perfil'] = remove_duplicados(usuario['perfil'])
+
+    headers_consolidados = list(usuarios_consolidados[0])
+
+    date_file = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+    monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
+    criar_arquivo_csv(header, response_list, f'csv/usuarios_top_{date_file}.csv')
+    logging.info("-----Termino da busca dos usuarios ativos no TOP e seus grupos associados-----")

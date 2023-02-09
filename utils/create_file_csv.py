@@ -67,6 +67,7 @@ def retorna_nomes_arquivos_em_lista_ambiente() -> dict[str, list[str]]:
     sca_lista = []
     fluig_lista = []
     protheus_lista = []
+    top_lista = []
     consolidada_arquivo = f'{busca_valor_yaml()["config"]["filenames"]["consolidate"]}.csv'
     diretorio_lista = listar_diretorio_csv()
     for diretorio in diretorio_lista:
@@ -82,6 +83,8 @@ def retorna_nomes_arquivos_em_lista_ambiente() -> dict[str, list[str]]:
                 fluig_lista.append(nome_lista[2])
             case 'protheus':
                 protheus_lista.append(nome_lista[2])
+            case 'top':
+                top_lista.append(nome_lista[1])
             case _:
                 logging.warning(f"Ambiente desconhecido: {nome_lista[1]}.")
 
@@ -89,6 +92,7 @@ def retorna_nomes_arquivos_em_lista_ambiente() -> dict[str, list[str]]:
     ambiente['sca'] = sca_lista
     ambiente['fluig'] = fluig_lista
     ambiente['protheus'] = protheus_lista
+    ambiente['top'] = top_lista
     return ambiente
 
 

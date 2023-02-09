@@ -37,6 +37,8 @@ request:
           AMBIENTAL: 43209
           CQG: 43560
         url: 'https://cqghom.queirozgalvao.com/corp-web/rest/organograma/obter/'
+    top:
+      url: 'https://cqghom.queirozgalvao.com/top-web/rest/usuarios'
   soap:
     fluig:
       urls:

@@ -120,3 +120,16 @@ def separa_listas(seq: list[any], num: int) -> list[list]:
         last += avg
 
     return out
+
+
+def remove_duplicados(lista_itens_duplicados: list) -> list:
+    """
+    Esta função remove ítens duplicados dentro de uma lista e mantém a ordem original.
+    :param lista_itens_duplicados: (list): recebe uma lista de ítens duplicados.
+    :return: retorna uma lista com ítens não duplicados.
+    """
+    lista_itens_nao_duplicada = []
+    for item in lista_itens_duplicados:
+        if item not in lista_itens_nao_duplicada:
+            lista_itens_nao_duplicada.append(item)
+    return lista_itens_nao_duplicada
