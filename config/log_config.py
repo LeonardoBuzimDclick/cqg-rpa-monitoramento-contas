@@ -7,7 +7,7 @@ from config.config_yaml import busca_valor_yaml
 
 def ajusta_config_logging() -> None:
     """
-    Esta função ajusta a configuração dos logging.
+    Esta função ajusta a configuração dos loggings.
     """
     config = busca_valor_yaml()
     filename = f'logs/{config["config"]["logging"]["filename"]}_{datetime.now().strftime("%Y%m%dT%H%M%SZ")}.log'
@@ -26,7 +26,7 @@ def ajusta_config_logging() -> None:
 
 def bot_text_art() -> None:
     """
-    Esta função imprime o bot.
+    Esta função exibe o bot.
     """
     logging.info("    ____     ")
     logging.info("   [____]    ")

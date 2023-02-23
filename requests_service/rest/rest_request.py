@@ -12,9 +12,9 @@ from utils.listas_utils import separa_listas, agrupa_listas_consolidada, remove_
 def get_usuarios_ativos_sca(url: str, token: str) -> list[dict]:
     """
     Esta função obtém os dados dos usuários ativos no SCA.
-    :param url: (str): recebe o endpoint de usuários ativos no SCA.
+    :param url: (str): recebe um endpoint de usuários ativos.
     :param token: (str): recebe token de segurança.
-    :return: retorna os usuários ativos no SCA.
+    :return: retorna uma lista de usuários ativos.
     """
     logging.debug("-----Inicio do metodo get usuarios ativos SCA-----")
 
@@ -29,8 +29,8 @@ def get_usuarios_ativos_sca(url: str, token: str) -> list[dict]:
 def get_grupos_associados_sca(url: str, user_input_list: list[dict]) -> list[dict]:
     """
     Esta função obtém os grupos associados para cada usuário ativo no SCA.
-    :param url: (str): recebe o endpoint de grupos associados para cada usuário ativo no SCA.
-    :param user_input_list: (list): recebe lista de usuários ativos.
+    :param url: (str): recebe um endpoint de grupos.
+    :param user_input_list: (list): recebe uma lista de usuários ativos.
     :return: retorna uma lista de usuários ativo no SCA e seus grupos associados.
     """
     logging.debug("-----Inicio do metodo get grupos associados SCA-----")
@@ -49,10 +49,10 @@ def get_usuarios_ativos_grupos_associados_sca(url_sca: str, token_usuario: str, 
                                               divisao_listas: int) -> None:
     """
     Esta função obtém os dados dos usuários ativos e seus grupos associados.
-    :param divisao_listas: (int): número de listas que será divido para consultar em multithread
-    :param url_sca: (str): recebe o endpoint de usuários ativos no SCA.
+    :param url_sca: (str): recebe um endpoint de usuários ativos.
     :param token_usuario: (str): recebe token de segurança.
     :param url_grupo_sca: (str): recebe o endpoint de grupos associados para cada usuário ativo no SCA.
+    :param divisao_listas: (int): número de listas que será divido para consultar em multithread.
     """
     logging.info("-----Buscando usuarios ativos no SCA e seus grupos associados-----")
 
@@ -193,7 +193,7 @@ def obter_gestores_seus_colaboradores_associados(url: str, tenant: str) -> list:
 def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> list[dict]:
     """
     Esta função checa cada colaborador em corpweb.
-    :param ambiente_gestores: recebe uma lista de gestores com o seu ambiente como chave.
+    :param ambiente_gestores: (list): recebe uma lista de gestores com o seu ambiente como chave.
     :return: retorna os usuários.
     """
     usuarios = ler_arquivo_consolidada()
@@ -246,9 +246,8 @@ def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: 
 
 def buscar_usuarios_grupos_associados_top(url: str):
     """
-    Esta função obtém os dados dos usuários e seus grupos associados
-    :param url:
-    :return:
+    Esta função obtém os dados dos usuários e seus grupos associados no top.
+    :param url: (str): recebe o endpoint de usuários ativos.
     """
     response = request_rest_get_base(url=url)
 

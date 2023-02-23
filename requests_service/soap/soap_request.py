@@ -10,7 +10,7 @@ from utils.listas_utils import agrupa_listas_rm
 def request_usuario_fluig(url: str, body: dict) -> list[dict[str, any]]:
     """
     Esta função obtém os dados dos usuários ativos no FLUIG.
-    :param url: (str): recebe um endpoint dos usuários ativos no FLUIG.
+    :param url: (str): recebe um endpoint dos usuários ativos.
     :param body: (dict): recebe um xml em string.
     :return: retorna uma lista de usuários ativos no FLUIG.
     """
@@ -20,7 +20,7 @@ def request_usuario_fluig(url: str, body: dict) -> list[dict[str, any]]:
 def request_grupo_associado_fluig(url: str, body: dict) -> list[dict[str, any]]:
     """
     Esta função obtém os grupos associados para cada usuário ativo no FLUIG.
-    :param url: (str): recebe o endpoint de grupos associados para cada usuário ativo no FLUIG.
+    :param url: (str): recebe o endpoint de grupos associados para cada usuário ativo.
     :param body: (dict): recebe um xml em string.
     :return: retorna uma lista de usuários ativo no FLUIG e seus grupos associados.
     """
@@ -30,8 +30,8 @@ def request_grupo_associado_fluig(url: str, body: dict) -> list[dict[str, any]]:
 def busca_usuarios_ativos_e_grupos_associados_fluig(url_fluig: str, body_fluig: dict,
                                                     url_grupo_fluig: str, body_grupo_fluig: dict, tenant: str) -> None:
     """
-    Esta função obtém os dados dos usuários ativos e seus grupos associados.
-    :param url_fluig: (str): recebe o endpoint de usuários ativos no FLUIG.
+    Esta função obtém os dados dos usuários ativos e seus grupos associados no FLUIG.
+    :param url_fluig: (str): recebe o endpoint de usuários ativos.
     :param body_fluig: (dict): recebe um xml em string.
     :param url_grupo_fluig: (str):  recebe o endpoint de grupos associados para cada usuário ativo no SCA.
     :param body_grupo_fluig: (dict): recebe um xml em string.
@@ -81,7 +81,7 @@ def busca_usuarios_ativos_e_grupos_associados_fluig(url_fluig: str, body_fluig: 
 def busca_usuarios_ativos_rm(url_rm: str, body_rm: dict, soap_action: str, token_authorization: str, tenant: str):
     """
     Esta função busca usuários ativos no RM.
-    :param url_rm: (str): recebe um endpoint de usuários ativos no RM.
+    :param url_rm: (str): recebe um endpoint de usuários ativos.
     :param body_rm: (dict): recebe um xml em string.
     :param soap_action: (str): recebe um valor string.
     :param token_authorization: (str): recebe token de autorização.

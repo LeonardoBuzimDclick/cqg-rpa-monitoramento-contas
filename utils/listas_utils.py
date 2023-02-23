@@ -67,6 +67,13 @@ def agrupa_listas_consolidada(list_dict: list) -> list:
 
 
 def checa_chave_e_retorna_mesma_string(chave: str, dicionario_alvo: dict, dicionario_recurso: dict):
+    """
+    Esta função checa se a chave pertence ou não pertence ao dicionário alvo.
+    :param chave: (str): valor a se testado.
+    :param dicionario_alvo: (dict): dicionário alvo.
+    :param dicionario_recurso: (dict): dicionário de retorno.
+    :return: retorna uma dicinário com os valores.
+    """
     if chave in dicionario_alvo:
         return dicionario_alvo[chave]
     else:
@@ -74,6 +81,13 @@ def checa_chave_e_retorna_mesma_string(chave: str, dicionario_alvo: dict, dicion
 
 
 def checa_chave_e_add_lista(chave: str, dicionario_alvo: dict, dicionario_recurso: dict):
+    """
+    Esta função checa se a chave pertence ou não pertence ao dicionário alvo.
+    :param chave: (str): valor a se testado.
+    :param dicionario_alvo: (dict): dicionário alvo.
+    :param dicionario_recurso: (dict): dicionário de retorno.
+    :return:
+    """
     if chave in dicionario_alvo:
         dicionario_alvo[chave].append(dicionario_recurso[chave])
         return dicionario_alvo[chave]

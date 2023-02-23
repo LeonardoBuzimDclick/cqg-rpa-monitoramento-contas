@@ -5,7 +5,7 @@ from email.message import EmailMessage
 
 def send_email(config_email: dict, message: str) -> None:
     """
-    Esta função envia uma messagem para email destinado.
+    Esta função enviará uma mensagem para o e-mail destinatário.
     :param config_email: (dict): configuração do email.
     :param message: (str): menssagem a ser passada.
     """
