@@ -1,5 +1,6 @@
 import base64
 import logging
+import re
 from datetime import datetime
 
 from config.request_config import request_post_soap_base
@@ -54,7 +55,8 @@ def busca_usuarios_ativos_e_grupos_associados_fluig(url_fluig: str, body_fluig: 
             if id == grupo['colleagueGroupPK.colleagueId']:
                 grupos_associados.append(grupo['colleagueGroupPK.groupId'])
 
-        usuario_consolidado['sig_usuario'] = ''  # TODO aguardando clayton retornar para pegar esse dado
+        usuario_consolidado['sig_usuario'] = re.search(r'([\w\\.]*)^([\w\\.]*)', usuario['mail'].upper()).group() \
+            if usuario['mail'] else ''
         usuario_consolidado['email'] = usuario['mail'].upper() if usuario['mail'] else ''
         usuario_consolidado['sistema'] = 'FLUIG'
         usuario_consolidado['ambiente'] = tenant
