@@ -209,7 +209,7 @@ def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> tuple[list[dict],
     return usuarios_corpweb_consolidado, usuarios_agrupados
 
 
-def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: dict, url: dict) -> None:
+def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: dict, url: dict) -> list[dict]:
     """
     Esta função busca os gestores e seus colaboradores associado no corp web é checa o arquivo consolidado.
     """
@@ -226,13 +226,8 @@ def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: 
 
         gestores_colaborares_por_ambiente_list.append(gestores_colaborares_por_ambiente)
 
-    usuarios_dentro_corpweb, usuarios_fora_corpweb = \
-        checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
-
-    date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
-    criar_arquivo_csv(usuarios_fora_corpweb, f'csv/CONSOLIDADA_POS_CORP_WEB_{date_files}.csv')
-
     logging.info('-----Termino da fase 2 [agrupamento]-----')
+    return gestores_colaborares_por_ambiente_list
 
 
 def buscar_usuarios_grupos_associados_top(url: str):
@@ -270,83 +265,94 @@ def buscar_usuarios_grupos_associados_top(url: str):
     logging.info("-----Termino da busca dos usuarios ativos no TOP e seus grupos associados-----")
 
 
-def busca_gestores_colaboradores_corp_web_cria_csv() -> None:
-    """
-    Esta função busca os gestores e seus colaboradores associado no corp web e cria um csv com os gestores.
-    """
-    logging.info('-----Inicio da fase 2 [agrupamento]-----')
-    parametros = {'ENGETEC': 43701, 'ALYA': 43542, 'AMBIENTAL': 43209, 'CQG': 43560}
-    # 'FRONTIS': 43871,
-    url = 'https://cqghom.queirozgalvao.com/corp-web/rest/organograma/obter/'
-    gestores_colaborares_por_ambiente_list = []
-    for ambiente, codigo in parametros.items():
-        url_parametrizada = f'{url}{codigo}'
-
-        gestores_colaborares_por_ambiente = {
-            ambiente: obter_gestores_seus_colaboradores_associados(url_parametrizada, ambiente)
-        }
-
-        gestores_colaborares_por_ambiente_list.append(gestores_colaborares_por_ambiente)
-
-    rows = []
-    for gestores_colaborares_por_ambiente in gestores_colaborares_por_ambiente_list:
-        for ambiente, gestores in gestores_colaborares_por_ambiente.items():
-            for gestor in gestores:
-                if not gestor['colaboradores']:
-                    row = {
-                        'gestor_login': gestor['sig_usuario'],
-                        'gestor_email': gestor['email'],
-                        'gestor_nome': gestor['nom_usuario'],
-                        'area_colaborador': '',
-                        'login_colaborador': '',
-                        'email_colaborador': '',
-                        'nom_colaborador': '',
-                        'sistema': ambiente,
-                        'sistema_fluig': 'S' if ambiente == 'fluig' else 'N',
-
-                    }
-                    rows.append(row)
-                    continue
-
-                for colaborador in gestor['colaboradores']:
-                    row = {
-                        'gestor_login': gestor['sig_usuario'],
-                        'gestor_email': gestor['email'],
-                        'gestor_nome': gestor['nom_usuario'],
-                        'area_colaborador': colaborador['area_colaborador'],
-                        'login_colaborador': colaborador['sig_usuario'],
-                        'email_colaborador': colaborador['email'],
-                        'nom_colaborador': colaborador['nom_usuario'],
-                        'sistema': ambiente,
-                        'sistema_fluig': 'S' if ambiente == 'fluig' else 'N',
-                    }
-                    rows.append(row)
-
-    colab_list, _ = checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
-
-    row_file = []
-    for colab in colab_list:
-        for row in rows:
-            if colab['sig_usuario'] != '' and row['login_colaborador'] != '' and \
-                    colab['sig_usuario'].upper() == row['login_colaborador'].upper() or \
-                    colab['email'] != '' and row['email_colaborador'] != '' or \
-                    colab['email'].upper() == row['email_colaborador'].upper():
-                for perfil in colab['perfil']:
-                    gestor_final = {
-                        'sistema': row['sistema'],
-                        'sistema_fluig': row['sistema_fluig'],
-                        'gestor_login': row['gestor_login'],
-                        'gestor_email': row['gestor_email'],
-                        'gestor_nome': row['gestor_nome'],
-                        'area_colaborador': row['area_colaborador'],
-                        'login_colaborador': row['login_colaborador'],
-                        'email_colaborador': row['email_colaborador'],
-                        'nom_colaborador': row['nom_colaborador'],
-                        'perfil': perfil,
-                    }
-                    row_file.append(gestor_final)
+def checa_corpweb_e_envia_fluig_gestores_localizados(gestores_colaborares_por_ambiente_list: list):
+    usuarios_dentro_corpweb, usuarios_fora_corpweb = \
+        checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
 
     date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
-    criar_arquivo_csv(row_file, f'csv/GESTORES_CORP_WEB_{date_files}.csv')
+    criar_arquivo_csv(usuarios_fora_corpweb, f'csv/CONSOLIDADA_POS_CORP_WEB_{date_files}.csv')
 
-    print('terminou a execução')
+
+
+
+# método criado para criar planilha de exemplo
+# def busca_gestores_colaboradores_corp_web_cria_csv() -> None:
+#     """
+#     Esta função busca os gestores e seus colaboradores associado no corp web e cria um csv com os gestores.
+#     """
+#     logging.info('-----Inicio da fase 2 [agrupamento]-----')
+#     parametros = {'ENGETEC': 43701, 'ALYA': 43542, 'AMBIENTAL': 43209, 'CQG': 43560}
+#     # 'FRONTIS': 43871,
+#     url = 'https://cqghom.queirozgalvao.com/corp-web/rest/organograma/obter/'
+#     gestores_colaborares_por_ambiente_list = []
+#     for ambiente, codigo in parametros.items():
+#         url_parametrizada = f'{url}{codigo}'
+#
+#         gestores_colaborares_por_ambiente = {
+#             ambiente: obter_gestores_seus_colaboradores_associados(url_parametrizada, ambiente)
+#         }
+#
+#         gestores_colaborares_por_ambiente_list.append(gestores_colaborares_por_ambiente)
+#
+#     rows = []
+#     for gestores_colaborares_por_ambiente in gestores_colaborares_por_ambiente_list:
+#         for ambiente, gestores in gestores_colaborares_por_ambiente.items():
+#             for gestor in gestores:
+#                 if not gestor['colaboradores']:
+#                     row = {
+#                         'gestor_login': gestor['sig_usuario'],
+#                         'gestor_email': gestor['email'],
+#                         'gestor_nome': gestor['nom_usuario'],
+#                         'area_colaborador': '',
+#                         'login_colaborador': '',
+#                         'email_colaborador': '',
+#                         'nom_colaborador': '',
+#                         'sistema': ambiente,
+#                         'sistema_fluig': 'S' if ambiente == 'fluig' else 'N',
+#
+#                     }
+#                     rows.append(row)
+#                     continue
+#
+#                 for colaborador in gestor['colaboradores']:
+#                     row = {
+#                         'gestor_login': gestor['sig_usuario'],
+#                         'gestor_email': gestor['email'],
+#                         'gestor_nome': gestor['nom_usuario'],
+#                         'area_colaborador': colaborador['area_colaborador'],
+#                         'login_colaborador': colaborador['sig_usuario'],
+#                         'email_colaborador': colaborador['email'],
+#                         'nom_colaborador': colaborador['nom_usuario'],
+#                         'sistema': ambiente,
+#                         'sistema_fluig': 'S' if ambiente == 'fluig' else 'N',
+#                     }
+#                     rows.append(row)
+#
+#     colab_list, _ = checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
+#
+#     row_file = []
+#     for colab in colab_list:
+#         for row in rows:
+#             if colab['sig_usuario'] != '' and row['login_colaborador'] != '' and \
+#                     colab['sig_usuario'].upper() == row['login_colaborador'].upper() or \
+#                     colab['email'] != '' and row['email_colaborador'] != '' or \
+#                     colab['email'].upper() == row['email_colaborador'].upper():
+#                 for perfil in colab['perfil']:
+#                     gestor_final = {
+#                         'sistema': row['sistema'],
+#                         'sistema_fluig': row['sistema_fluig'],
+#                         'gestor_login': row['gestor_login'],
+#                         'gestor_email': row['gestor_email'],
+#                         'gestor_nome': row['gestor_nome'],
+#                         'area_colaborador': row['area_colaborador'],
+#                         'login_colaborador': row['login_colaborador'],
+#                         'email_colaborador': row['email_colaborador'],
+#                         'nom_colaborador': row['nom_colaborador'],
+#                         'perfil': perfil,
+#                     }
+#                     row_file.append(gestor_final)
+#
+#     date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+#     criar_arquivo_csv(row_file, f'csv/GESTORES_CORP_WEB_{date_files}.csv')
+#
+#     print('terminou a execução')
