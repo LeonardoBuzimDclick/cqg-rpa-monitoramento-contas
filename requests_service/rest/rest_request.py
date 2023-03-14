@@ -40,7 +40,7 @@ def get_grupos_associados_sca(url: str, user_input_list: list[dict]) -> list[dic
         user_input["nomUsuario"] = str(user_input["nomUsuario"]).strip()
         user_input["grupos"] = acessos
 
-    logging.debug("-----Inicio do metodo get grupos associados SCA-----")
+    logging.debug("-----Fim do metodo get grupos associados SCA-----")
 
     return user_input_list
 
@@ -72,11 +72,6 @@ def get_usuarios_ativos_grupos_associados_sca(url_sca: str, token_usuario: str, 
     for t in threads:
         t.join()
 
-    header = []
-    if not header:
-        for chave, value in usuarios[0].items():
-            header.append(chave)
-
     usuarios_consolidados = []
     headers_consolidados = []
     for usuario in usuarios:
@@ -92,7 +87,7 @@ def get_usuarios_ativos_grupos_associados_sca(url_sca: str, token_usuario: str, 
 
     date_file = datetime.now().strftime("%Y%m%dT%H%M%SZ")
     monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
-    criar_arquivo_csv(header, usuarios, f'csv/usuarios_sca_{date_file}.csv')
+    criar_arquivo_csv(usuarios, f'csv/usuarios_sca_{date_file}.csv')
     logging.info("-----Termino da busca dos usuarios ativos no SCA e seus grupos associados-----")
 
 
@@ -115,11 +110,6 @@ def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
     logging.info(
         f"-----Termino da busca dos usuarios ativos no Protheus no ambiente {tenant} com {len(resultado)} dados-----")
 
-    header_file = []
-    usuario = resultado[0]
-    for chave, value in usuario.items():
-        header_file.append(chave)
-
     usuarios_consolidados = []
     headers_consolidados = []
     for usuario in resultado:
@@ -141,8 +131,7 @@ def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
     date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
     logging.debug(f"-----Inicio da escrita dos usuarios ativos do Protheus do ambiente {tenant} no CSV -----")
     monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
-    criar_arquivo_csv(header_file, response['mensagem'],
-                      f'csv/usuarios_protheus_{tenant}_{date_files}.csv')
+    criar_arquivo_csv(response['mensagem'], f'csv/usuarios_protheus_{tenant}_{date_files}.csv')
 
     logging.debug(f"-----Termino da escrita dos usuarios ativos do Protheus do ambiente {tenant} no CSV-----")
 
@@ -175,12 +164,16 @@ def obter_gestores_seus_colaboradores_associados(url: str, tenant: str) -> list:
         for colaborador in gestor['colaboradores']:
             colaborador_final = {
                 'sig_usuario': '' if not colaborador['sig_usuario'] else colaborador['sig_usuario'].upper(),
-                'email': '' if not colaborador['email'] else colaborador['email'].upper()
+                'email': '' if not colaborador['email'] else colaborador['email'].upper(),
+                'nom_usuario': '' if not colaborador['nome'] else colaborador['nome'].upper(),
+                'area_colaborador': '' if not colaborador['funcao'] else colaborador['funcao'].upper()
+
             }
             colaboradores_lista.append(colaborador_final)
 
         gestor_final = {
-            'sig_usuario': gestor['SIG_USUARIO'],
+            'nom_usuario': '' if not gestor['NOM_COLABORADOR'] else gestor['NOM_COLABORADOR'].lower(),
+            'sig_usuario': '' if not gestor['SIG_USUARIO'] else gestor['SIG_USUARIO'],
             'email': '' if not gestor['TXT_EMAIL'] else gestor['TXT_EMAIL'],
             'sig_estr_organizacional': gestor['SIG_ESTR_ORGANIZACIONAL'],
             'colaboradores': colaboradores_lista
@@ -190,7 +183,7 @@ def obter_gestores_seus_colaboradores_associados(url: str, tenant: str) -> list:
     return gestores_com_colaboradores
 
 
-def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> list[dict]:
+def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> tuple[list[dict], list[dict]]:
     """
     Esta função checa cada colaborador em corpweb.
     :param ambiente_gestores: (list): recebe uma lista de gestores com o seu ambiente como chave.
@@ -198,21 +191,22 @@ def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> list[dict]:
     """
     usuarios = ler_arquivo_consolidada()
     usuarios_agrupados = agrupa_listas_consolidada(usuarios)
-
+    usuarios_corpweb_consolidado = []
     for gestores_dict in ambiente_gestores:
         for ambiente, gestores in gestores_dict.items():
             for gestor in gestores:
                 if len(gestor['colaboradores']) == 0:
                     continue
-                for usuario in usuarios_agrupados:
-                    for colaborador in gestor['colaboradores']:
+                for colaborador in gestor['colaboradores']:
+                    for usuario in usuarios_agrupados:
                         if colaborador['sig_usuario'] != '' and colaborador['sig_usuario'] == usuario['sig_usuario'] or \
                                 colaborador['email'] != '' and colaborador['email'] == usuario['email']:
                             usuarios_agrupados.remove(usuario)
+                            usuarios_corpweb_consolidado.append(usuario)
                             logging.debug(f'usuario está corpweb: {usuario}')
                             break
 
-    return usuarios_agrupados
+    return usuarios_corpweb_consolidado, usuarios_agrupados
 
 
 def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: dict, url: dict) -> None:
@@ -232,14 +226,11 @@ def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: 
 
         gestores_colaborares_por_ambiente_list.append(gestores_colaborares_por_ambiente)
 
-    usuarios = checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
+    usuarios_dentro_corpweb, usuarios_fora_corpweb = \
+        checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
 
-    header_file = []
-    for chave, value in usuarios[0].items():
-        header_file.append(chave)
     date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
-    criar_arquivo_csv(header_file, usuarios,
-                      f'csv/CONSOLIDADA_POS_CORP_WEB_{date_files}.csv')
+    criar_arquivo_csv(usuarios_fora_corpweb, f'csv/CONSOLIDADA_POS_CORP_WEB_{date_files}.csv')
 
     logging.info('-----Termino da fase 2 [agrupamento]-----')
 
@@ -252,11 +243,6 @@ def buscar_usuarios_grupos_associados_top(url: str):
     response = request_rest_get_base(url=url)
 
     response_list = list(response)
-
-    header = []
-    if not header:
-        for chave, value in response[0].items():
-            header.append(chave)
 
     usuarios_consolidados_disperso = []
 
@@ -280,5 +266,87 @@ def buscar_usuarios_grupos_associados_top(url: str):
 
     date_file = datetime.now().strftime("%Y%m%dT%H%M%SZ")
     monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
-    criar_arquivo_csv(header, response_list, f'csv/usuarios_top_{date_file}.csv')
+    criar_arquivo_csv(response_list, f'csv/usuarios_top_{date_file}.csv')
     logging.info("-----Termino da busca dos usuarios ativos no TOP e seus grupos associados-----")
+
+
+def busca_gestores_colaboradores_corp_web_cria_csv() -> None:
+    """
+    Esta função busca os gestores e seus colaboradores associado no corp web e cria um csv com os gestores.
+    """
+    logging.info('-----Inicio da fase 2 [agrupamento]-----')
+    parametros = {'ENGETEC': 43701, 'ALYA': 43542, 'AMBIENTAL': 43209, 'CQG': 43560}
+    # 'FRONTIS': 43871,
+    url = 'https://cqghom.queirozgalvao.com/corp-web/rest/organograma/obter/'
+    gestores_colaborares_por_ambiente_list = []
+    for ambiente, codigo in parametros.items():
+        url_parametrizada = f'{url}{codigo}'
+
+        gestores_colaborares_por_ambiente = {
+            ambiente: obter_gestores_seus_colaboradores_associados(url_parametrizada, ambiente)
+        }
+
+        gestores_colaborares_por_ambiente_list.append(gestores_colaborares_por_ambiente)
+
+    rows = []
+    for gestores_colaborares_por_ambiente in gestores_colaborares_por_ambiente_list:
+        for ambiente, gestores in gestores_colaborares_por_ambiente.items():
+            for gestor in gestores:
+                if not gestor['colaboradores']:
+                    row = {
+                        'gestor_login': gestor['sig_usuario'],
+                        'gestor_email': gestor['email'],
+                        'gestor_nome': gestor['nom_usuario'],
+                        'area_colaborador': '',
+                        'login_colaborador': '',
+                        'email_colaborador': '',
+                        'nom_colaborador': '',
+                        'sistema': ambiente,
+                        'sistema_fluig': 'S' if ambiente == 'fluig' else 'N',
+
+                    }
+                    rows.append(row)
+                    continue
+
+                for colaborador in gestor['colaboradores']:
+                    row = {
+                        'gestor_login': gestor['sig_usuario'],
+                        'gestor_email': gestor['email'],
+                        'gestor_nome': gestor['nom_usuario'],
+                        'area_colaborador': colaborador['area_colaborador'],
+                        'login_colaborador': colaborador['sig_usuario'],
+                        'email_colaborador': colaborador['email'],
+                        'nom_colaborador': colaborador['nom_usuario'],
+                        'sistema': ambiente,
+                        'sistema_fluig': 'S' if ambiente == 'fluig' else 'N',
+                    }
+                    rows.append(row)
+
+    colab_list, _ = checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
+
+    row_file = []
+    for colab in colab_list:
+        for row in rows:
+            if colab['sig_usuario'] != '' and row['login_colaborador'] != '' and \
+                    colab['sig_usuario'].upper() == row['login_colaborador'].upper() or \
+                    colab['email'] != '' and row['email_colaborador'] != '' or \
+                    colab['email'].upper() == row['email_colaborador'].upper():
+                for perfil in colab['perfil']:
+                    gestor_final = {
+                        'sistema': row['sistema'],
+                        'sistema_fluig': row['sistema_fluig'],
+                        'gestor_login': row['gestor_login'],
+                        'gestor_email': row['gestor_email'],
+                        'gestor_nome': row['gestor_nome'],
+                        'area_colaborador': row['area_colaborador'],
+                        'login_colaborador': row['login_colaborador'],
+                        'email_colaborador': row['email_colaborador'],
+                        'nom_colaborador': row['nom_colaborador'],
+                        'perfil': perfil,
+                    }
+                    row_file.append(gestor_final)
+
+    date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+    criar_arquivo_csv(row_file, f'csv/GESTORES_CORP_WEB_{date_files}.csv')
+
+    print('terminou a execução')

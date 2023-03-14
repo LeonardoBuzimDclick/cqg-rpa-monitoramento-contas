@@ -5,13 +5,16 @@ import os
 from config.config_yaml import busca_valor_yaml
 
 
-def criar_arquivo_csv(header: list, list_rows: list, filename: str) -> None:
+def criar_arquivo_csv(list_rows: list[dict], filename: str) -> None:
     """
     Esta função cria um arquivo CSV.
     :param header: (list): recebe uma lista de cabeçalho do CSV.
     :param list_rows: (list): recebe uma lista de linhas do CSV.
     :param filename: (str): recebe o nome do arquivo CSV.
     """
+    header = []
+    for chave, value in list_rows[0].items():
+        header.append(chave)
 
     with open(filename, mode='w', newline='') as filecsv:
         writer = csv.DictWriter(f=filecsv, fieldnames=header, delimiter=';')
