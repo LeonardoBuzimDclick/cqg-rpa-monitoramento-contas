@@ -84,11 +84,10 @@ def obter_dados_usuarios_ativos_rm_seus_grupos():
     </soapenv:Envelope>"""
 
 
-def envelope_fluig_gestores(username: str, password: str, company_id: str, process_id: str, indice: int, gestor: dict)\
-        -> tuple[str, int]:
-    
-    tabela_colaboradores, indice = \
-        cria_tabela_colaboradores(indice, gestor['sistema'], gestor['colab_list'], gestor['sistema_fluig'])
+def envelope_fluig_gestores(nom_gestor: str, password: str, company_id: str, process_id: str, login_gestor: str,
+                            email_gestor: str, colab_list: list[dict]) -> str:
+
+    tabela_colaboradores = cria_tabela_colaboradores(colab_list)
     
     return f"""
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
@@ -96,7 +95,7 @@ def envelope_fluig_gestores(username: str, password: str, company_id: str, proce
         <soapenv:Header/>
         <soapenv:Body>
             <ws:startProcessClassic>
-                <username>{username}</username>
+                <username>{nom_gestor}</username>
                 <password>{password}</password>
                 <companyId>{company_id}</companyId> #TODO verificar com equipe que mexe no gecom os valores por sistema
                 <processId>{process_id}</processId> #TODO id do fluxo de monitoramento = seria um indice ?! 
@@ -109,19 +108,19 @@ def envelope_fluig_gestores(username: str, password: str, company_id: str, proce
                 <cardData>
                     <item>
                         <key>ambiente</key>
-                        <value>{gestor['ambiente']}</value>
+                        <value>TESTE</value>
                     </item>
                     <item>
                         <key>gestorLogin</key>
-                        <value>{gestor['gestor_login']}</value>
+                        <value>{login_gestor}</value>
                     </item>
                     <item>
                         <key>gestorEmail</key>
-                        <value>{gestor['gestor_email']}</value>
+                        <value>{email_gestor}</value>
                     </item>
                     <item>
                         <key>gestorNome</key>
-                        <value>{gestor['gestor_nome']}</value>
+                        <value>{nom_gestor}</value>
                     </item>         
                     {tabela_colaboradores}
                 </cardData>
@@ -129,61 +128,77 @@ def envelope_fluig_gestores(username: str, password: str, company_id: str, proce
                 <managerMode>false</managerMode>
             </ws:startProcessClassic>
         </soapenv:Body>
-    </soapenv:Envelope>""", indice
+    </soapenv:Envelope>"""
 
 
-def cria_tabela_colaboradores(indice: int, sistema: str, colab_list: list, sistema_fluig: str) -> tuple[dict, int]:
+def cria_tabela_colaboradores(colab_list: list[dict]) -> str:
 
-    indice_local = indice
-    envelope = {}
+    envelope_list = []
+    indice = 0
+
     for colab in colab_list:
-        indice_local = + 1
-        envelope += f"""                   
-                    <item>
-                        <key>tabela1Area___{indice}</key>
-                        <value>{colab['area_colaborador']}</value>
-                    </item>
-                    <item>
-                        <key>tabela1CCCodigo___{indice}</key> #TODO qual código é esse ?
-                        <value>7910150</value>
-                    </item>
-                    <item>
-                        <key>tabela1CCDescricao___{indice}</key>
-                        <value>CSC-TI</value>
-                    </item>
-                    <item>
-                        <key>tabela1ColabLogin___{indice}</key>
-                        <value>{colab['login_colaborador']}</value>
-                    </item>
-                    <item>
-                        <key>tabela1ColabEmail___{indice}</key>
-                        <value>{colab['email_colaborador']}</value>
-                    </item>
-                    <item>
-                        <key>tabela1ColabNome___{indice}</key>
-                        <value>{colab['nom_colaborador']}</value>
-                    </item>
-                    <item>
-                        <key>tabela1Sistema___{indice}</key>
-                        <value>{sistema}</value>
-                    </item>
-                    <item>
-                        <key>tabela1SistemaFluig___{indice}</key>
-                        <value>{sistema_fluig}</value>
-                    </item>
-                    <item>
-                        <key>tabela1GrupoCodigo___{indice}</key>
-                        <value>admin</value>
-                    </item>
-                    <item>
-                        <key>tabela1GrupoNome___{indice}</key>
-                        <value>Administradores</value>
-                    </item>
-                    <item>
-                        <key>tabela1GrupoTipo___{indice}</key>
-                        <value>Total</value>
-                    </item>"""
 
-    indice = indice_local
-    return envelope, indice
+        for usuario_agrupado in colab['usuario_agrupado']:
+
+            for perfil in usuario_agrupado['perfil']:
+
+                indice += 1
+
+                sistema = usuario_agrupado['sistema']
+
+                sistema_fluig = 'S' if sistema.upper() == 'FLUIG' else 'N'
+
+                envelope = f"""                   
+                            <item>
+                                <key>tabela1Area___{indice}</key>
+                                <value>{colab['usuario_dado_corp_web']['area_colaborador']}</value>
+                            </item>
+                            <item>
+                                <key>tabela1CCCodigo___{indice}</key> #TODO qual código é esse ?
+                                <value>7910150</value>
+                            </item>
+                            <item>
+                                <key>tabela1CCDescricao___{indice}</key>
+                                <value>CSC-TI</value>
+                            </item>
+                            <item>
+                                <key>tabela1ColabLogin___{indice}</key>
+                                <value>{colab['sig_usuario']}</value>
+                            </item>
+                            <item>
+                                <key>tabela1ColabEmail___{indice}</key>
+                                <value>{colab['email']}</value>
+                            </item>
+                            <item>
+                                <key>tabela1ColabNome___{indice}</key>
+                                <value>{colab['usuario_dado_corp_web']['nom_usuario']}</value>
+                            </item>
+                            <item>
+                                <key>tabela1Sistema___{indice}</key>
+                                <value>{sistema}</value>
+                            </item>
+                            <item>
+                                <key>tabela1SistemaFluig___{indice}</key>
+                                <value>{sistema_fluig}</value>
+                            </item>
+                            <item>
+                                <key>tabela1GrupoCodigo___{indice}</key>
+                                <value>{perfil}</value>
+                            </item>
+                            <item>
+                                <key>tabela1GrupoNome___{indice}</key>
+                                <value>{perfil}</value>
+                            </item>
+                            <item>
+                                <key>tabela1GrupoTipo___{indice}</key>
+                                <value>Total</value>
+                            </item>"""
+
+                envelope_list.append(envelope)
+
+    envelope_concatenado = ''
+    for envelope in envelope_list:
+        envelope_concatenado += envelope
+
+    return envelope_concatenado
 
