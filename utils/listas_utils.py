@@ -21,7 +21,7 @@ def agrupa_listas_consolidada(list_dict: list) -> list:
     :param list_dict: (list): recebe uma lista.
     :return: retorna um lista consolidada.
     """
-    chave_sig_usuario = operator.itemgetter("sig_usuario")
+    chave_sig_usuario = operator.itemgetter("sig_usuario", "email")
     group_sig_usuario = sorted(list_dict, key=chave_sig_usuario)
     usuario_agrupado_sig_usuario_list = []
     for key, values in groupby(group_sig_usuario, chave_sig_usuario):
@@ -34,13 +34,12 @@ def agrupa_listas_consolidada(list_dict: list) -> list:
         for value in list(values):
             usuario_agrupado_sig_usuario = {
                 'sig_usuario': checa_chave_e_retorna_mesma_string('sig_usuario', usuario_agrupado_sig_usuario, value),
-                'email':  checa_chave_e_retorna_mesma_string('email', usuario_agrupado_sig_usuario, value),
+                'email': checa_chave_e_retorna_mesma_string('email', usuario_agrupado_sig_usuario, value),
                 'sistema': checa_chave_e_add_lista('sistema', usuario_agrupado_sig_usuario, value),
                 'ambiente': checa_chave_e_add_lista('ambiente', usuario_agrupado_sig_usuario, value),
                 'perfil': checa_chave_e_add_lista('perfil', usuario_agrupado_sig_usuario, value),
             }
-
-        usuario_agrupado_sig_usuario_list.append(usuario_agrupado_sig_usuario)
+            usuario_agrupado_sig_usuario_list.append(usuario_agrupado_sig_usuario)
 
     chave_email = operator.itemgetter("email")
     group_email = sorted(usuario_agrupado_sig_usuario_list, key=chave_email)
@@ -60,8 +59,7 @@ def agrupa_listas_consolidada(list_dict: list) -> list:
                 'ambiente': checa_chave_e_add_lista('ambiente', usuario_agrupado_sig_usuario, value),
                 'perfil': checa_chave_e_add_lista('perfil', usuario_agrupado_sig_usuario, value),
             }
-
-        usuario_agrupado_email_list.append(usuario_agrupado_sig_usuario)
+            usuario_agrupado_email_list.append(usuario_agrupado_sig_usuario)
 
     return usuario_agrupado_email_list
 
@@ -147,3 +145,23 @@ def remove_duplicados(lista_itens_duplicados: list) -> list:
         if item not in lista_itens_nao_duplicada:
             lista_itens_nao_duplicada.append(item)
     return lista_itens_nao_duplicada
+
+
+def agrupa_lista_por_email_sig_usuario(usuarios_list: list[dict]) -> list[dict]:
+    usuarios_agrupado_list = []
+    for usuario in usuarios_list:
+        usuario_consolidado = []
+        for usu in usuarios_list:
+            if usu['sig_usuario'] != '' and usu['sig_usuario'] == usuario['sig_usuario'] or \
+                    usu['email'] != '' and usu['email'] == usuario['email']:
+                usuarios_list.remove(usu)
+                usuario_consolidado.append(usu)
+
+        usuario_final = {
+            'sig_usuario': usuario['sig_usuario'],
+            'email': usuario['email'],
+            'usuario_agrupado': usuario_consolidado
+        }
+        usuarios_agrupado_list.append(usuario_final)
+
+    return usuarios_agrupado_list
