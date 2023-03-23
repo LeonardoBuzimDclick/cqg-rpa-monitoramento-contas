@@ -6,7 +6,8 @@ from itertools import chain
 
 from config.request_config import request_rest_get_base, request_rest_post_base
 from utils.create_file_csv import ler_arquivo_consolidada, monta_arquivo_consolidado, criar_arquivo_csv
-from utils.listas_utils import separa_listas, agrupa_listas_consolidada, remove_duplicados
+from utils.listas_utils import separa_listas, agrupa_listas_consolidada, remove_duplicados, \
+    agrupa_lista_por_email_sig_usuario
 
 
 def get_usuarios_ativos_sca(url: str, token: str) -> list[dict]:
@@ -136,6 +137,41 @@ def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
     logging.debug(f"-----Termino da escrita dos usuarios ativos do Protheus do ambiente {tenant} no CSV-----")
 
 
+def buscar_usuarios_grupos_associados_top(url: str):
+    """
+    Esta função obtém os dados dos usuários e seus grupos associados no top.
+    :param url: (str): recebe o endpoint de usuários ativos.
+    """
+    response = request_rest_get_base(url=url)
+
+    response_list = list(response)
+
+    usuarios_consolidados_disperso = []
+
+    for usuario in response:
+        usuario_consolidado = {'sig_usuario': usuario['codUsuario'].upper() if usuario['codUsuario'] else '',
+                               'email': usuario['email'].upper() if usuario['email'] else '',
+                               'sistema': 'TOP',
+                               'ambiente': 'TOP',
+                               'perfil': usuario['codPerfil'].upper() if usuario['codPerfil'] else ''}
+
+        usuarios_consolidados_disperso.append(usuario_consolidado)
+
+    usuarios_consolidados = agrupa_listas_consolidada(usuarios_consolidados_disperso)
+
+    for usuario in usuarios_consolidados:
+        usuario['ambiente'] = 'TOP'
+        usuario['sistema'] = 'TOP'
+        usuario['perfil'] = remove_duplicados(usuario['perfil'])
+
+    headers_consolidados = list(usuarios_consolidados[0])
+
+    date_file = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+    monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
+    criar_arquivo_csv(response_list, f'csv/usuarios_top_{date_file}.csv')
+    logging.info("-----Termino da busca dos usuarios ativos no TOP e seus grupos associados-----")
+
+
 def obter_gestores_seus_colaboradores_associados(url: str, tenant: str) -> list:
     """
     Esta função obtém os dados dos gestores e seus colaboradores associados.
@@ -190,32 +226,34 @@ def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> tuple[list[dict],
     :return: retorna os usuários.
     """
     usuarios = ler_arquivo_consolidada()
-    usuarios_agrupados = agrupa_listas_consolidada(usuarios)
+    usuarios_agrupados = agrupa_lista_por_email_sig_usuario(usuarios)
     usuarios_corpweb_consolidado = []
     for gestores_dict in ambiente_gestores:
         for ambiente, gestores in gestores_dict.items():
             for gestor in gestores:
+                colaboradores_final = []
                 if len(gestor['colaboradores']) == 0:
                     continue
                 for colaborador in gestor['colaboradores']:
                     for usuario in usuarios_agrupados:
-                        if colaborador['sig_usuario'] != '' and colaborador['sig_usuario'] == usuario['sig_usuario'] or \
+                        if colaborador['sig_usuario'] != '' and colaborador['sig_usuario'] == usuario['sig_usuario'] or\
                                 colaborador['email'] != '' and colaborador['email'] == usuario['email']:
                             usuarios_agrupados.remove(usuario)
-                            usuarios_corpweb_consolidado.append(usuario)
+                            usuario['usuario_dado_corp_web'] = colaborador
+                            colaboradores_final.append(usuario)
                             logging.debug(f'usuario está corpweb: {usuario}')
-                            break
+
+                gestor['colaboradores'] = colaboradores_final
+                usuarios_corpweb_consolidado.append(gestor)
 
     return usuarios_corpweb_consolidado, usuarios_agrupados
 
 
-def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: dict, url: dict) -> list[dict]:
+def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: dict, url: str) -> \
+        tuple[list[dict], list[dict]]:
     """
     Esta função busca os gestores e seus colaboradores associado no corp web é checa o arquivo consolidado.
     """
-    logging.info('-----Inicio da fase 2 [agrupamento]-----')
-    parametros = parametros['request']['rest']['corp_web']['usuarios']['parametros']
-    url = url['request']['rest']['corp_web']['usuarios']['url']
     gestores_colaborares_por_ambiente_list = []
     for ambiente, codigo in parametros.items():
         url_parametrizada = f'{url}{codigo}'
@@ -226,43 +264,7 @@ def busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros: 
 
         gestores_colaborares_por_ambiente_list.append(gestores_colaborares_por_ambiente)
 
-    logging.info('-----Termino da fase 2 [agrupamento]-----')
-    return gestores_colaborares_por_ambiente_list
-
-
-def buscar_usuarios_grupos_associados_top(url: str):
-    """
-    Esta função obtém os dados dos usuários e seus grupos associados no top.
-    :param url: (str): recebe o endpoint de usuários ativos.
-    """
-    response = request_rest_get_base(url=url)
-
-    response_list = list(response)
-
-    usuarios_consolidados_disperso = []
-
-    for usuario in response:
-        usuario_consolidado = {'sig_usuario': usuario['codUsuario'].upper() if usuario['codUsuario'] else '',
-                               'email': usuario['email'].upper() if usuario['email'] else '',
-                               'sistema': 'TOP',
-                               'ambiente': 'TOP',
-                               'perfil': usuario['codPerfil'].upper() if usuario['codPerfil'] else ''}
-
-        usuarios_consolidados_disperso.append(usuario_consolidado)
-
-    usuarios_consolidados = agrupa_listas_consolidada(usuarios_consolidados_disperso)
-
-    for usuario in usuarios_consolidados:
-        usuario['ambiente'] = 'TOP'
-        usuario['sistema'] = 'TOP'
-        usuario['perfil'] = remove_duplicados(usuario['perfil'])
-
-    headers_consolidados = list(usuarios_consolidados[0])
-
-    date_file = datetime.now().strftime("%Y%m%dT%H%M%SZ")
-    monta_arquivo_consolidado(headers_consolidados, usuarios_consolidados)
-    criar_arquivo_csv(response_list, f'csv/usuarios_top_{date_file}.csv')
-    logging.info("-----Termino da busca dos usuarios ativos no TOP e seus grupos associados-----")
+    return checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
 
 
 def checa_corpweb_e_envia_fluig_gestores_localizados(gestores_colaborares_por_ambiente_list: list):
