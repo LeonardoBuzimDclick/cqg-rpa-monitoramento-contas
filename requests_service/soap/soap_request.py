@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 
 from config.request_config import request_post_soap_base
-from requests_service.soap.body_xml import cria_tabela_colaboradores
+from requests_service.soap.body_xml import cria_tabela_colaboradores, envelope_fluig_gestores
 from utils.create_file_csv import monta_arquivo_consolidado, criar_arquivo_csv
 from utils.listas_utils import agrupa_listas_rm
 
@@ -142,15 +142,19 @@ def busca_usuarios_ativos_rm(url_rm: str, body_rm: dict, soap_action: str, token
 
 def enviar_gestores_colaboradores_fluig(gestores_colab_list: list[dict]):
 
-    indice = 1
     for gestor_colab in gestores_colab_list:
 
-        sistema = gestor_colab['sistema']
-        sistema_fluig = 'S' if sistema == 'fluig' else 'N'
+        nom_gestor = gestor_colab['nom_gestor']
 
-        envelope, indice_colab = \
-            cria_tabela_colaboradores(indice, sistema, gestor_colab['colaboradores'], sistema_fluig)
+        login_gestor = gestor_colab['login_gestor']
 
-        indice = indice_colab
-        response = request_post_soap_base(url='https://dc01-hom127.queirozgalvao.com', body=envelope)
+        email_gestor = gestor_colab['email_gestor']
+
+        colab_list = gestor_colab['colaboradores']
+
+        envelope = envelope_fluig_gestores(nom_gestor=nom_gestor, login_gestor=login_gestor, email_gestor=email_gestor,
+                                           colab_list=colab_list, password='**************', company_id='1', process_id='procMonitorConta')
+
+        print(envelope)
+        # response = request_post_soap_base(url='https://dc01-hom127.queirozgalvao.com', body=envelope)
 
