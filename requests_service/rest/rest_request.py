@@ -85,7 +85,7 @@ def get_usuarios_ativos_grupos_associados_sca(url_sca: str, token_usuario: str, 
 
         perfils_consolidados = []
         for perfil in usuario['grupos']:
-            perfil_consolidado = {'nom': f'{perfil}', 'cod': f'{perfil}', 'tipo': ''}
+            perfil_consolidado = {'nom': perfil, 'cod': perfil, 'tipo': 'Comum'}
             perfils_consolidados.append(perfil_consolidado)
 
         usuario_consolidado = {'sig_usuario': usuario['sigUsuario'].upper() if usuario['sigUsuario'] else '',
