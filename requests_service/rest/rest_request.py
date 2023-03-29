@@ -6,8 +6,7 @@ from itertools import chain
 
 from config.request_config import request_rest_get_base, request_rest_post_base
 from utils.create_file_csv import ler_arquivo_consolidada, monta_arquivo_consolidado, criar_arquivo_csv
-from utils.listas_utils import separa_listas, agrupa_listas_consolidada, remove_duplicados, \
-    agrupa_lista_por_email_sig_usuario
+from utils.listas_utils import separa_listas, agrupa_lista_por_email_sig_usuario
 
 
 def get_usuarios_ativos_sca(url: str, token: str) -> list[dict]:
@@ -32,14 +31,17 @@ def get_grupos_associados_sca(url: str, user_input_list: list[dict]) -> list[dic
     Esta função obtém os grupos associados para cada usuário ativo no SCA.
     :param url: (str): recebe um endpoint de grupos.
     :param user_input_list: (list): recebe uma lista de usuários ativos.
-    :return: retorna uma lista de usuários ativo no SCA e seus grupos associados.
+    :return: retorna uma lista de usurious ativo no SCA e seus grupos associados.
     """
     logging.debug("-----Inicio do metodo get grupos associados SCA-----")
 
     for user_input in user_input_list:
-        acessos = request_rest_post_base(url=url, body={'user': user_input['sigUsuario']})
-        user_input["nomUsuario"] = str(user_input["nomUsuario"]).strip()
-        user_input["grupos"] = acessos
+        sig_usuario = user_input['sigUsuario']
+        acessos = request_rest_post_base(url=url, body={'user': sig_usuario})
+
+        logging.debug(f'usuario: {sig_usuario} - perfil: {acessos}')
+        user_input['grupos'] = acessos
+        user_input['nomUsuario'] = str(user_input['nomUsuario']).strip()
 
     logging.debug("-----Fim do metodo get grupos associados SCA-----")
 
@@ -76,11 +78,21 @@ def get_usuarios_ativos_grupos_associados_sca(url_sca: str, token_usuario: str, 
     usuarios_consolidados = []
     headers_consolidados = []
     for usuario in usuarios:
+
+        if not usuario['grupos']:
+            logging.info(f'usuario: { usuario["sigUsuario"]} nao tem perfil')
+            continue
+
+        perfils_consolidados = []
+        for perfil in usuario['grupos']:
+            perfil_consolidado = {'nom': f'{perfil}', 'cod': f'{perfil}', 'tipo': ''}
+            perfils_consolidados.append(perfil_consolidado)
+
         usuario_consolidado = {'sig_usuario': usuario['sigUsuario'].upper() if usuario['sigUsuario'] else '',
                                'email': usuario['email'].upper() if usuario['email'] else '',
                                'sistema': 'SCA',
                                'ambiente': 'SCA',
-                               'perfil': ','.join(usuario['grupos']) if usuario['grupos'] else ''}
+                               'perfil': perfils_consolidados}
         if not headers_consolidados:
             for chave, value in usuario_consolidado.items():
                 headers_consolidados.append(chave)
@@ -119,11 +131,24 @@ def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
             logging.info(f'o usuario {usuario["LOGIN_USUARIO"]} não é ativo')
             continue
 
+        if len(usuario['GRUPOS']) == 1 and \
+                usuario['GRUPOS'][0]["NOME_GRUPO"] == '' and \
+                usuario['GRUPOS'][0]["CODIGO_GRUPO"] == '':
+
+            logging.info(f'o usuario {usuario["LOGIN_USUARIO"]} não tem perfil')
+            continue
+
+        perfils_consolidados = []
+        for perfil in usuario['GRUPOS']:
+            perfil_consolidado = {'nom': f'{perfil["NOME_GRUPO"]}', 'cod': f'{perfil["CODIGO_GRUPO"]}',
+                                  'tipo': 'ADMINISTRADOR' if perfil["CODIGO_GRUPO"] == '000000' else 'COMUM'}
+            perfils_consolidados.append(perfil_consolidado)
+
         usuario_consolidado = {'sig_usuario': usuario['LOGIN_USUARIO'].upper() if usuario['LOGIN_USUARIO'] else '',
                                'email': usuario['EMAIL_USUARIO'].upper() if usuario['EMAIL_USUARIO'] else '',
                                'sistema': 'PROTHEUS',
                                'ambiente': tenant,
-                               'perfil': usuario['GRUPOS'] if usuario['GRUPOS'] else ''}
+                               'perfil': perfils_consolidados}
         if not headers_consolidados:
             for chave, value in usuario_consolidado.items():
                 headers_consolidados.append(chave)
@@ -146,23 +171,23 @@ def buscar_usuarios_grupos_associados_top(url: str):
 
     response_list = list(response)
 
-    usuarios_consolidados_disperso = []
+    usuarios_consolidados = []
 
     for usuario in response:
+        perfils_consolidados = [
+            {'nom': usuario['codPerfil'],
+             'cod': usuario['nomePerfil'] if usuario['nomePerfil'] else usuario['codPerfil'],
+             'tipo': usuario['codSistema']
+             }
+        ]
+
         usuario_consolidado = {'sig_usuario': usuario['codUsuario'].upper() if usuario['codUsuario'] else '',
                                'email': usuario['email'].upper() if usuario['email'] else '',
                                'sistema': 'TOP',
                                'ambiente': 'TOP',
-                               'perfil': usuario['codPerfil'].upper() if usuario['codPerfil'] else ''}
+                               'perfil': perfils_consolidados}
 
-        usuarios_consolidados_disperso.append(usuario_consolidado)
-
-    usuarios_consolidados = agrupa_listas_consolidada(usuarios_consolidados_disperso)
-
-    for usuario in usuarios_consolidados:
-        usuario['ambiente'] = 'TOP'
-        usuario['sistema'] = 'TOP'
-        usuario['perfil'] = remove_duplicados(usuario['perfil'])
+        usuarios_consolidados.append(usuario_consolidado)
 
     headers_consolidados = list(usuarios_consolidados[0])
 
@@ -236,7 +261,7 @@ def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> tuple[list[dict],
                     continue
                 for colaborador in gestor['colaboradores']:
                     for usuario in usuarios_agrupados:
-                        if colaborador['sig_usuario'] != '' and colaborador['sig_usuario'] == usuario['sig_usuario'] or\
+                        if colaborador['sig_usuario'] != '' and colaborador['sig_usuario'] == usuario['sig_usuario'] or \
                                 colaborador['email'] != '' and colaborador['email'] == usuario['email']:
                             usuarios_agrupados.remove(usuario)
                             usuario['usuario_dado_corp_web'] = colaborador
@@ -273,88 +298,3 @@ def checa_corpweb_e_envia_fluig_gestores_localizados(gestores_colaborares_por_am
 
     date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
     criar_arquivo_csv(usuarios_fora_corpweb, f'csv/CONSOLIDADA_POS_CORP_WEB_{date_files}.csv')
-
-
-
-
-# método criado para criar planilha de exemplo
-# def busca_gestores_colaboradores_corp_web_cria_csv() -> None:
-#     """
-#     Esta função busca os gestores e seus colaboradores associado no corp web e cria um csv com os gestores.
-#     """
-#     logging.info('-----Inicio da fase 2 [agrupamento]-----')
-#     parametros = {'ENGETEC': 43701, 'ALYA': 43542, 'AMBIENTAL': 43209, 'CQG': 43560}
-#     # 'FRONTIS': 43871,
-#     url = 'https://cqghom.queirozgalvao.com/corp-web/rest/organograma/obter/'
-#     gestores_colaborares_por_ambiente_list = []
-#     for ambiente, codigo in parametros.items():
-#         url_parametrizada = f'{url}{codigo}'
-#
-#         gestores_colaborares_por_ambiente = {
-#             ambiente: obter_gestores_seus_colaboradores_associados(url_parametrizada, ambiente)
-#         }
-#
-#         gestores_colaborares_por_ambiente_list.append(gestores_colaborares_por_ambiente)
-#
-#     rows = []
-#     for gestores_colaborares_por_ambiente in gestores_colaborares_por_ambiente_list:
-#         for ambiente, gestores in gestores_colaborares_por_ambiente.items():
-#             for gestor in gestores:
-#                 if not gestor['colaboradores']:
-#                     row = {
-#                         'gestor_login': gestor['sig_usuario'],
-#                         'gestor_email': gestor['email'],
-#                         'gestor_nome': gestor['nom_usuario'],
-#                         'area_colaborador': '',
-#                         'login_colaborador': '',
-#                         'email_colaborador': '',
-#                         'nom_colaborador': '',
-#                         'sistema': ambiente,
-#                         'sistema_fluig': 'S' if ambiente == 'fluig' else 'N',
-#
-#                     }
-#                     rows.append(row)
-#                     continue
-#
-#                 for colaborador in gestor['colaboradores']:
-#                     row = {
-#                         'gestor_login': gestor['sig_usuario'],
-#                         'gestor_email': gestor['email'],
-#                         'gestor_nome': gestor['nom_usuario'],
-#                         'area_colaborador': colaborador['area_colaborador'],
-#                         'login_colaborador': colaborador['sig_usuario'],
-#                         'email_colaborador': colaborador['email'],
-#                         'nom_colaborador': colaborador['nom_usuario'],
-#                         'sistema': ambiente,
-#                         'sistema_fluig': 'S' if ambiente == 'fluig' else 'N',
-#                     }
-#                     rows.append(row)
-#
-#     colab_list, _ = checa_colaboradores_em_corpweb(gestores_colaborares_por_ambiente_list)
-#
-#     row_file = []
-#     for colab in colab_list:
-#         for row in rows:
-#             if colab['sig_usuario'] != '' and row['login_colaborador'] != '' and \
-#                     colab['sig_usuario'].upper() == row['login_colaborador'].upper() or \
-#                     colab['email'] != '' and row['email_colaborador'] != '' or \
-#                     colab['email'].upper() == row['email_colaborador'].upper():
-#                 for perfil in colab['perfil']:
-#                     gestor_final = {
-#                         'sistema': row['sistema'],
-#                         'sistema_fluig': row['sistema_fluig'],
-#                         'gestor_login': row['gestor_login'],
-#                         'gestor_email': row['gestor_email'],
-#                         'gestor_nome': row['gestor_nome'],
-#                         'area_colaborador': row['area_colaborador'],
-#                         'login_colaborador': row['login_colaborador'],
-#                         'email_colaborador': row['email_colaborador'],
-#                         'nom_colaborador': row['nom_colaborador'],
-#                         'perfil': perfil,
-#                     }
-#                     row_file.append(gestor_final)
-#
-#     date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
-#     criar_arquivo_csv(row_file, f'csv/GESTORES_CORP_WEB_{date_files}.csv')
-#
-#     print('terminou a execução')

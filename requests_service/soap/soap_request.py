@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 
 from config.request_config import request_post_soap_base
-from requests_service.soap.body_xml import cria_tabela_colaboradores, envelope_fluig_gestores
+from requests_service.soap.body_xml import envelope_fluig_gestores
 from utils.create_file_csv import monta_arquivo_consolidado, criar_arquivo_csv
 from utils.listas_utils import agrupa_listas_rm
 
@@ -50,17 +50,21 @@ def busca_usuarios_ativos_e_grupos_associados_fluig(url_fluig: str, body_fluig: 
     for usuario in usuarios_list:
         usuario_consolidado = {}
         id = usuario['colleaguePK.colleagueId']
+
         grupos_associados = []
         for grupo in grupos_list:
             if id == grupo['colleagueGroupPK.colleagueId']:
-                grupos_associados.append(grupo['colleagueGroupPK.groupId'])
+
+                perfil_consolidado = {'nom': f'{grupo["colleagueGroupPK.groupId"]}', 'cod': f'{grupo["colleagueGroupPK.groupId"]}', 'tipo': 'COMUM'}
+
+                grupos_associados.append(perfil_consolidado)
 
         usuario_consolidado['sig_usuario'] = re.search(r'([\w\\.]*)^([\w\\.]*)', usuario['mail'].upper()).group() \
             if usuario['mail'] else ''
         usuario_consolidado['email'] = usuario['mail'].upper() if usuario['mail'] else ''
         usuario_consolidado['sistema'] = 'FLUIG'
         usuario_consolidado['ambiente'] = tenant
-        usuario_consolidado['perfil'] = ','.join(grupos_associados)
+        usuario_consolidado['perfil'] = grupos_associados
         usuario['grupos_associados'] = grupos_associados
         usuarios_consolidados.append(usuario_consolidado)
 
@@ -105,11 +109,15 @@ def busca_usuarios_ativos_rm(url_rm: str, body_rm: dict, soap_action: str, token
             logging.warning(
                 f'Não foram encontradas os cabeçalhos EMAIL ou SISTEMA no retorno - RM - {tenant} - {usuario["CODUSUARIO"]}')
             continue
+
+        perfil_consolidado = {'nom': f'{usuario["NOME_PERFIL"]}', 'cod': f'{usuario["CODPERFIL"]}',
+                              'tipo': f'{usuario["CODSISTEMA"]}'}
+
         usuario_consolidado = {'sig_usuario': usuario['CODUSUARIO'].upper() if usuario['CODUSUARIO'] else '',
                                'email': usuario['EMAIL'].upper() if usuario['EMAIL'] else '',
                                'sistema': 'RM',
                                'ambiente': tenant,
-                               'perfil': usuario['SISTEMA'] if usuario['SISTEMA'] else ''}
+                               'perfil': perfil_consolidado if perfil_consolidado else ''}
         usuarios_consolidados_disperso.append(usuario_consolidado)
         if not headers_consolidados:
             for chave, value in usuario_consolidado.items():
