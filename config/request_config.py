@@ -167,12 +167,10 @@ def request_rest_post_base(url: str, body: dict, header=None) -> list:
                 continue
 
             logging.debug("-----Fim do metodo post base-----")
-
-            return [] if response.text == '' else json.loads(response.text)
+            return [] if response.text == '' or response.text is None else json.loads(response.text)
 
         except requests.exceptions.RequestException as e:
             logging.exception(e.errno)
             logging.warning(f"-----Houve um erro na hora de requisitar {i}/{time_retry} tentativas-----")
             if i == time_retry:
                 raise e
-
