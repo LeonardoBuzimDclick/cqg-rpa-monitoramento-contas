@@ -1,6 +1,8 @@
 import csv
+import json
 import logging
 import os
+import sys
 
 from config.config_yaml import busca_valor_yaml
 
@@ -8,7 +10,6 @@ from config.config_yaml import busca_valor_yaml
 def criar_arquivo_csv(list_rows: list[dict], filename: str) -> None:
     """
     Esta função cria um arquivo CSV.
-    :param header: (list): recebe uma lista de cabeçalho do CSV.
     :param list_rows: (list): recebe uma lista de linhas do CSV.
     :param filename: (str): recebe o nome do arquivo CSV.
     """
@@ -45,7 +46,7 @@ def retorna_nome_arquivo_consolidada() -> str:
     return f'{config["config"]["filenames"]["consolidate"]}.csv'
 
 
-def monta_arquivo_consolidado(header: list, list_rows: list) -> object:
+def monta_arquivo_consolidado(header: list, list_rows: list) -> None:
     """
     Esta função monta um arquivo consolidado.
     :param header: (list): colunas do arquivo.
@@ -55,7 +56,7 @@ def monta_arquivo_consolidado(header: list, list_rows: list) -> object:
     filename = retorna_nome_arquivo_consolidada()
     arquivo_listas = listar_diretorio_csv()
     if arquivo_listas.count(filename) == 0:
-        criar_arquivo_csv(header, list_rows, f'csv/{filename}')
+        criar_arquivo_csv(list_rows, f'csv/{filename}')
     else:
         continua_arquivo_csv(header, list_rows, f'csv/{filename}')
 
@@ -110,24 +111,45 @@ def listar_diretorio_csv():
     return res
 
 
+def deletar_todos_arquivos_csv():
+
+    for pasta, subpasta, arquivos in os.walk('csv/'):
+
+        for arquivo in arquivos:
+
+            if arquivo.endswith('.csv'):
+                path = os.path.join(pasta, arquivo)
+                logging.info('deleted : ', path)
+                os.remove(path)
+
+
 def ler_arquivo_consolidada() -> list[dict]:
     """
     Esta função ler o arquivo consolidade.
     :return: retorna as linhas.
     """
 
-    filename = f'csv/{retorna_nome_arquivo_consolidada()}'
-    with open(filename, newline='') as filecsv:
-        reader = csv.DictReader(f=filecsv, delimiter=';')
-        linhas = []
-        for row in reader:
-            linha = {
-                'sig_usuario': row['sig_usuario'],
-                'email': row['email'],
-                'sistema': row['sistema'],
-                'ambiente': row['ambiente'],
-                'perfil': row['perfil'].replace('[', '').replace(']', '').split(',') if ',' in row['perfil']
-                else row['perfil']
-            }
-            linhas.append(linha)
-        return linhas
+    maxInt = sys.maxsize
+    while True:
+        try:
+            filename = f'csv/{retorna_nome_arquivo_consolidada()}'
+            with open(filename, newline='') as filecsv:
+                csv.field_size_limit(maxInt)
+                reader = csv.DictReader(f=filecsv, delimiter=';')
+                linhas = []
+                for row in reader:
+                    linha = {
+                        'sig_usuario': row['sig_usuario'],
+                        'email': row['email'],
+                        'sistema': row['sistema'],
+                        'ambiente': row['ambiente'],
+                        'perfil': json.loads(row['perfil'])
+                    }
+                    linhas.append(linha)
+                return linhas
+        except OverflowError:
+            maxInt = int(maxInt / 10)
+
+
+def cria_csv_gestores_colab_fora_corpweb(gestores_colab_list: list[dict]):
+    return
