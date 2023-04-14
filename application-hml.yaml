@@ -43,8 +43,8 @@ request:
   soap:
     fluig:
       urls:
-        - { cqg: { usuarios: 'https://minhacqg.queirozgalvao.com/webdesk/ECMDatasetService', grupos_associados: 'https://minhacqg.queirozgalvao.com/webdesk/ECMDatasetService' } }
-        - { engetec: { usuarios: 'https://minhaengetec.engetecbrasil.com/webdesk/ECMDatasetService', grupos_associados: 'https://minhaengetec.engetecbrasil.com/webdesk/ECMDatasetService' } }
+        - { cqg: { usuarios: 'https://dc01-hom127.queirozgalvao.com/webdesk/ECMDatasetService', grupos_associados: 'https://dc01-hom127.queirozgalvao.com/webdesk/ECMDatasetService' } }
+        - { engetec: { usuarios: 'https://dc01-hom127.queirozgalvao.com/webdesk/ECMDatasetService', grupos_associados: 'https://dc01-hom127.queirozgalvao.com/webdesk/ECMDatasetService' } }
     rm:
       urls:
         - { cqg: { usuarios: 'http://rmftbc.queirozgalvao.com:8053/wsConsultaSQL/IwsConsultaSQL' } }
