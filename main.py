@@ -1,3 +1,4 @@
+import json
 import logging
 import sys
 from datetime import datetime
@@ -6,21 +7,38 @@ from config.config_yaml import busca_valor_yaml
 from config.log_config import ajusta_config_logging
 from requests_service.mail.send_email import send_email
 from requests_service.main_request_ambientes import busca_usuarios_ativos_nos_ambientes
-from requests_service.rest.rest_request import busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado, \
-    buscar_usuarios_grupos_associados_top
+from requests_service.rest.rest_request import busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado
+from requests_service.soap.soap_request import enviar_gestores_colaboradores_fluig
+from utils.create_file_csv import cria_csv_gestores_colab_fora_corpweb
+from utils.listas_utils import filtrar_usuarios_corp_web_dados_completos
 
 
 def metodo_principal_execucao():
     """
     Esta função executa o monitoramento de contas.
     """
+    ajusta_config_logging()
     logging.info('-----Inicio do metodo principal de execucao-----')
     data_ini = datetime.now()
     config_app = busca_valor_yaml()
+    urls_rest = config_app['request']['rest']
+    url_usuarios_corp_web = urls_rest['corp_web']['usuarios']
     try:
-        buscou_todos_usuarios = busca_usuarios_ativos_nos_ambientes(config=config_app)
-        if buscou_todos_usuarios:
-            busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(parametros=config_app, url=config_app)
+        if busca_usuarios_ativos_nos_ambientes(config=config_app):
+            logging.info('-----Inicio da fase 2 [agrupamento]-----')
+            usuarios_corpweb, usuarios_fora_corpweb = \
+                busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(
+                    parametros=url_usuarios_corp_web['parametros'],
+                    url=url_usuarios_corp_web['url']
+                )
+
+            usuarios_dados_completos = filtrar_usuarios_corp_web_dados_completos(usuarios_corpweb,
+                                                                                 urls_rest['top']['url_findById'])
+            enviar_gestores_colaboradores_fluig(usuarios_dados_completos)
+            cria_csv_gestores_colab_fora_corpweb(usuarios_fora_corpweb)
+
+            logging.info('-----Termino da fase 2 [agrupamento]-----')
+
         else:
             raise Exception('O robô não buscou os usuarios em todos ambientes')
 
@@ -45,6 +63,6 @@ def metodo_principal_execucao():
 
 
 if __name__ == '__main__':
-    ajusta_config_logging()
     metodo_principal_execucao()
-    # buscar_usuarios_grupos_associados_top("https://cqghom.queirozgalvao.com/top-web/rest/usuarios")
+
+
