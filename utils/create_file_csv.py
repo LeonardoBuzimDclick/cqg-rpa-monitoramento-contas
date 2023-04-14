@@ -198,20 +198,20 @@ def cria_csv_gestores_corp_web_dados_invalidos(usuarios_corp_web_dados_invalidos
         if not gestor['colaboradores']:
 
             gestor_invalido = {'ambiente': 'N/A',
-                                 'gestor_login': gestor['login_gestor'],
-                                 'gestor_email': gestor['email_gestor'],
-                                 'gestor_nome': gestor['nom_gestor'],
-                                 'area_colaborador': 'N/A',
-                                 'cccodigo': 'N/A',
-                                 'ccdescricao': 'N/A',
-                                 'colab_login': 'N/A',
-                                 'colab_email': 'N/A',
-                                 'colab_nome': 'N/A',
-                                 'sistema': 'N/A',
-                                 'sistema_fluig': 'N/A',
-                                 'grupo_codigo': 'N/A',
-                                 'grupo_nome': 'N/A',
-                                 'grupo_tipo': 'N/A'}
+                               'gestor_login': gestor['login_gestor'],
+                               'gestor_email': gestor['email_gestor'],
+                               'gestor_nome': gestor['nom_gestor'],
+                               'area_colaborador': 'N/A',
+                               'cccodigo': 'N/A',
+                               'ccdescricao': 'N/A',
+                               'colab_login': 'N/A',
+                               'colab_email': 'N/A',
+                               'colab_nome': 'N/A',
+                               'sistema': 'N/A',
+                               'sistema_fluig': 'N/A',
+                               'grupo_codigo': 'N/A',
+                               'grupo_nome': 'N/A',
+                               'grupo_tipo': 'N/A'}
 
             gestores_invalidos.append(gestor_invalido)
         else:
