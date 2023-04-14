@@ -39,6 +39,7 @@ request:
         url: 'https://cqghom.queirozgalvao.com/corp-web/rest/organograma/obter/'
     top:
       url: 'https://cqghom.queirozgalvao.com/top-web/rest/usuarios'
+      url_findById: 'https://webapp.queirozgalvao.com/ldapws/rest/findById/'
   soap:
     fluig:
       urls:
