@@ -36,7 +36,7 @@ request:
           ALYA: 43542
           AMBIENTAL: 43209S
           CQG: 43560
-        url: 'https://cqghom.queirozgalvao.com/corp-web/rest/organograma/obter/'
+        url: 'https://webapp2.queirozgalvao.com/corp-web/'
     top:
       url: 'https://webapp.queirozgalvao.com/ldapws/rest/usuarios'
     url_findById: 'https://webapp.queirozgalvao.com/ldapws/rest/findById/'
@@ -45,6 +45,8 @@ request:
       urls:
         - { cqg: { usuarios: 'https://minhacqg.queirozgalvao.com/webdesk/ECMDatasetService', grupos_associados: 'https://minhacqg.queirozgalvao.com/webdesk/ECMDatasetService' } }
         - { engetec: { usuarios: 'https://minhaengetec.engetecbrasil.com/webdesk/ECMDatasetService', grupos_associados: 'https://minhaengetec.engetecbrasil.com/webdesk/ECMDatasetService' } }
+        - { vital: { usuarios: 'https://minhavital.vitalambiental.com.br/', grupos_associados: 'https://minhavital.vitalambiental.com.br/' } }
+        - { qgsa: {usuarios: 'https://intranet.qgsa.com.br/', grupos_associados: 'https://intranet.qgsa.com.br/' } }
     rm:
       urls:
         - { cqg: { usuarios: 'http://rmftbc.queirozgalvao.com:8053/wsConsultaSQL/IwsConsultaSQL' } }
