@@ -174,7 +174,7 @@ def cria_csv_gestores_colab_fora_corpweb(usuarios_fora_corp_web: list[dict]):
                                      'colab_login': usuario['sig_usuario'],
                                      'colab_email': usuario['email'],
                                      'colab_nome': 'N/A',
-                                     'sistema': usuario_agrupado['sistema'],
+                                     'sistema': sistema,
                                      'sistema_fluig': 'S' if sistema.upper() == 'FLUIG' else 'N',
                                      'grupo_codigo': perfil['cod'],
                                      'grupo_nome': perfil['nom'],
@@ -189,11 +189,8 @@ def cria_csv_gestores_colab_fora_corpweb(usuarios_fora_corp_web: list[dict]):
 def cria_csv_gestores_corp_web_dados_invalidos(usuarios_corp_web_dados_invalidos: list[dict]):
 
     gestores_invalidos = []
-    indice_usuario = 0
 
     for gestor in usuarios_corp_web_dados_invalidos:
-
-        print(f'quantidade de usuario: {indice_usuario}')
 
         if not gestor['colaboradores']:
 
@@ -234,7 +231,7 @@ def cria_csv_gestores_corp_web_dados_invalidos(usuarios_corp_web_dados_invalidos
                                            'colab_login': colaborador['sig_usuario'],
                                            'colab_email': colaborador['email'],
                                            'colab_nome': colaborador['usuario_dado_corp_web']['nom_usuario'],
-                                           'sistema': usuario_agrupado['sistema'],
+                                           'sistema': sistema,
                                            'sistema_fluig': 'S' if sistema.upper() == 'FLUIG' else 'N',
                                            'grupo_codigo': perfil['cod'],
                                            'grupo_nome': perfil['nom'],
@@ -246,7 +243,38 @@ def cria_csv_gestores_corp_web_dados_invalidos(usuarios_corp_web_dados_invalidos
     criar_arquivo_csv(gestores_invalidos, f'csv/GESTORES_CORP_WEB_DADOS_INVALIDOS_{date_files}.csv')
 
 
+def cria_csv_gestores_invalidos_fluig(usuarios_invalidos_fluig: list[dict]):
 
+    gestores_invalidos = []
 
+    for gestor in usuarios_invalidos_fluig:
 
+        for colaborador in gestor['colaboradores']:
+
+            for usuario_agrupado in colaborador['usuario_agrupado']:
+
+                for perfil in usuario_agrupado['perfil']:
+
+                    sistema = usuario_agrupado['sistema']
+
+                    gestor_invalido = {'ambiente': usuario_agrupado['ambiente'],
+                                       'gestor_login': gestor['login_gestor'],
+                                       'gestor_email': gestor['email_gestor'],
+                                       'gestor_nome': gestor['nom_gestor'],
+                                       'area_colaborador': colaborador['usuario_dado_corp_web']['area_colaborador'],
+                                       'cccodigo': colaborador['usuario_dado_corp_web']['cc_colaborador'],
+                                       'ccdescricao': colaborador['usuario_dado_corp_web']['dsc_cc_colaborador'],
+                                       'colab_login': colaborador['sig_usuario'],
+                                       'colab_email': colaborador['email'],
+                                       'colab_nome': colaborador['usuario_dado_corp_web']['nom_usuario'],
+                                       'sistema': sistema,
+                                       'sistema_fluig': 'S' if sistema.upper() == 'FLUIG' else 'N',
+                                       'grupo_codigo': perfil['cod'],
+                                       'grupo_nome': perfil['nom'],
+                                       'grupo_tipo': perfil['tipo']}
+
+                    gestores_invalidos.append(gestor_invalido)
+
+    date_files = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+    criar_arquivo_csv(gestores_invalidos, f'csv/gestores_invalidos_fluig_{date_files}.csv')
 

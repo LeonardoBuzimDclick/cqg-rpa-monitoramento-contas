@@ -84,7 +84,7 @@ def obter_dados_usuarios_ativos_rm_seus_grupos():
     </soapenv:Envelope>"""
 
 
-def envelope_fluig_gestores(nom_gestor: str, password: str, company_id: str, process_id: str, login_gestor: str,
+def envelope_fluig_gestores(amb_gestor: str, nom_gestor: str, password: str, company_id: str, process_id: str, login_gestor: str,
                             email_gestor: str, colab_list: list[dict], username: str) -> str:
     tabela_colaboradores = cria_tabela_colaboradores(colab_list)
 
@@ -107,7 +107,7 @@ def envelope_fluig_gestores(nom_gestor: str, password: str, company_id: str, pro
             <cardData>
                 <item>
                     <key>ambiente</key>
-                    <value>TESTE</value>
+                    <value>{amb_gestor}</value>
                 </item>
                 <item>
                     <key>gestorLogin</key>

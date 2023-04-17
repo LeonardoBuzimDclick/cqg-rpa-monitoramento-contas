@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import threading
 from datetime import datetime
@@ -92,7 +93,7 @@ def get_usuarios_ativos_grupos_associados_sca(url_sca: str, token_usuario: str, 
                                'email': usuario['email'].upper() if usuario['email'] else '',
                                'sistema': 'SCA',
                                'ambiente': 'SCA',
-                               'perfil': perfils_consolidados}
+                               'perfil': json.dumps(perfils_consolidados)}
         if not headers_consolidados:
             for chave, value in usuario_consolidado.items():
                 headers_consolidados.append(chave)
@@ -148,7 +149,8 @@ def request_protheus(url: str, header_tenant_id: str, tenant: str) -> None:
                                'email': usuario['EMAIL_USUARIO'].upper() if usuario['EMAIL_USUARIO'] else '',
                                'sistema': 'PROTHEUS',
                                'ambiente': tenant,
-                               'perfil': perfils_consolidados}
+                               'perfil': json.dumps(perfils_consolidados)
+                               }
         if not headers_consolidados:
             for chave, value in usuario_consolidado.items():
                 headers_consolidados.append(chave)
@@ -185,7 +187,8 @@ def buscar_usuarios_grupos_associados_top(url: str):
                                'email': usuario['email'].upper() if usuario['email'] else '',
                                'sistema': 'TOP',
                                'ambiente': 'TOP',
-                               'perfil': perfils_consolidados}
+                               'perfil': perfils_consolidados
+                               }
 
         usuarios_consolidados.append(usuario_consolidado)
 
@@ -227,12 +230,14 @@ def obter_gestores_seus_colaboradores_associados(url: str, tenant: str) -> list:
                 'sig_usuario': '' if not colaborador['sig_usuario'] else colaborador['sig_usuario'].upper(),
                 'email': '' if not colaborador['email'] else colaborador['email'].upper(),
                 'nom_usuario': '' if not colaborador['nome'] else colaborador['nome'].upper(),
-                'area_colaborador': '' if not colaborador['funcao'] else colaborador['funcao'].upper()
-
+                'area_colaborador': '' if not colaborador['funcao'] else colaborador['funcao'].upper(),
+                'cc_colaborador': '' if not colaborador['cod_centro_custo'] else colaborador['cod_centro_custo'],
+                'dsc_cc_colaborador': '' if not colaborador['dsc_centro_custo'] else colaborador['dsc_centro_custo']
             }
             colaboradores_lista.append(colaborador_final)
 
         gestor_final = {
+            'amb_gestor': tenant,
             'nom_usuario': '' if not gestor['NOM_COLABORADOR'] else gestor['NOM_COLABORADOR'].lower(),
             'sig_usuario': '' if not gestor['SIG_USUARIO'] else gestor['SIG_USUARIO'],
             'email': '' if not gestor['TXT_EMAIL'] else gestor['TXT_EMAIL'],
@@ -266,10 +271,17 @@ def checa_colaboradores_em_corpweb(ambiente_gestores: list) -> tuple[list[dict],
                             usuarios_agrupados.remove(usuario)
                             usuario['usuario_dado_corp_web'] = colaborador
                             colaboradores_final.append(usuario)
-                            logging.debug(f'usuario está corpweb: {usuario}')
 
-                gestor['colaboradores'] = colaboradores_final
-                usuarios_corpweb_consolidado.append(gestor)
+                gestor_final = {
+                    'amb_gestor': ambiente,
+                    'nom_gestor': gestor['nom_usuario'],
+                    'login_gestor': gestor['sig_usuario'],
+                    'email_gestor': gestor['email'],
+                    'company_id': 20 if ambiente == 'AMBIENTAL' else 1,
+                    'colaboradores': colaboradores_final,
+
+                }
+                usuarios_corpweb_consolidado.append(gestor_final)
 
     return usuarios_corpweb_consolidado, usuarios_agrupados
 

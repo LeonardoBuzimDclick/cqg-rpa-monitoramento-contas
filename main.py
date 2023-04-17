@@ -1,4 +1,3 @@
-import json
 import logging
 import sys
 from datetime import datetime
@@ -24,7 +23,8 @@ def metodo_principal_execucao():
     urls_rest = config_app['request']['rest']
     url_usuarios_corp_web = urls_rest['corp_web']['usuarios']
     try:
-        if busca_usuarios_ativos_nos_ambientes(config=config_app):
+        buscou_todos_usuarios = busca_usuarios_ativos_nos_ambientes(config=config_app)
+        if buscou_todos_usuarios:
             logging.info('-----Inicio da fase 2 [agrupamento]-----')
             usuarios_corpweb, usuarios_fora_corpweb = \
                 busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado(
@@ -33,7 +33,8 @@ def metodo_principal_execucao():
                 )
 
             usuarios_dados_completos = filtrar_usuarios_corp_web_dados_completos(usuarios_corpweb,
-                                                                                 urls_rest['top']['url_findById'])
+                                                                                 urls_rest['url_findById'])
+
             enviar_gestores_colaboradores_fluig(usuarios_dados_completos)
             cria_csv_gestores_colab_fora_corpweb(usuarios_fora_corpweb)
 
@@ -49,13 +50,13 @@ def metodo_principal_execucao():
         sys.exit(0)
     except Exception as e:
         logging.warning("Robô teve problemas ao buscar as informações.")
-        logging.warning(e)
+        logging.exception(e)
         try:
             send_email(config_app['email'], f'Favor restartar o robô, pois o mesmo teve problema.\n\n motivo: {e}')
             logging.info("Robô enviou o email de restart.")
         except Exception as e:
             logging.warning("Robô não conseguiu enviar o email solicitando o restart")
-            logging.warning(e)
+            logging.exception(e)
         data_fim = datetime.now()
         time_diff = data_fim - data_ini
         logging.info(f'O tempo total de execução do robô com erro foi: {time_diff}')
@@ -64,5 +65,4 @@ def metodo_principal_execucao():
 
 if __name__ == '__main__':
     metodo_principal_execucao()
-
 

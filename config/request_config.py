@@ -14,9 +14,9 @@ def request_post_soap_base(url: str, body: dict, headers=None, is_rm=False) -> l
     """
     Esta função obtém um xml em string e retorna uma lista de dicionário e um dicionário.
     :param url: (str): recebe um endpoint.
-    :param body: (dict): recebe uma configuração em xml.
-    :param headers: (None): recebe um xml em string.
-    :param is_rm: (False): Recebe um valor False.
+    :param body: (dict): corpo da requisição.
+    :param headers: (None): cabeçalho da requisição, por default vem null.
+    :param is_rm: (False): Flag para verificar se a requisição é RM.
     :return: retorna uma lista de dicionário ou um dicionário.
     """
 
@@ -61,6 +61,40 @@ def request_post_soap_base(url: str, body: dict, headers=None, is_rm=False) -> l
             logging.debug(f"-----Houve um erro na hora de requisitar {i}/{time_retry} tentativas-----")
             if i == time_retry:
                 raise e
+
+
+def revogacao_acesso_fluig(url: str, body: Any):
+
+    logging.debug("-----Inicio do metodo de revogacao de acesso ao fluig-----")
+
+    i = 0
+    status_code = 0
+    config = busca_valor_yaml()
+    time_retry = config['config']['request']['retry_times']
+
+    while i < time_retry:
+
+        if i != 0:
+            time.sleep(config['config']['request']['sleep'])
+
+        try:
+            i += 1
+            response = requests.post(url=url, data=body, timeout=config['config']['request']['timeout'])
+            status_code = response.status_code
+
+            if status_code != 200:
+                logging.warning(f"-----Mensagem com erro {i}/{time_retry} tentativas-----")
+                continue
+
+            logging.debug("-----Fim do metodo de revogacao de acesso ao fluig-----")
+
+        except requests.exceptions.RequestException as e:
+            logging.exception(e.errno)
+            logging.debug(f"-----Houve um erro na hora de requisitar {i}/{time_retry} tentativas-----")
+            if i == time_retry:
+                raise e
+
+    return status_code
 
 
 def transforma_lista_xml_em_list_str(lst: list) -> list:

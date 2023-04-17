@@ -1,5 +1,7 @@
-import operator
 from itertools import groupby
+
+from config.request_config import request_rest_get_base
+from utils.create_file_csv import cria_csv_gestores_corp_web_dados_invalidos
 
 
 def agrupa_listas_rm(list_dict: list) -> list:
@@ -13,55 +15,6 @@ def agrupa_listas_rm(list_dict: list) -> list:
     for key, value in groupby(INFO, key_func_rm):
         resutado.append(list(value))
     return resutado
-
-
-def agrupa_listas_consolidada(list_dict: list) -> list:
-    """
-    Esta função agrupa listas por determinada chave.
-    :param list_dict: (list): recebe uma lista.
-    :return: retorna um lista consolidada.
-    """
-    chave_sig_usuario = operator.itemgetter("sig_usuario", "email")
-    group_sig_usuario = sorted(list_dict, key=chave_sig_usuario)
-    usuario_agrupado_sig_usuario_list = []
-    for key, values in groupby(group_sig_usuario, chave_sig_usuario):
-        if key == '':
-            for value in list(values):
-                usuario_agrupado_sig_usuario_list.append(value)
-            continue
-
-        usuario_agrupado_sig_usuario = {}
-        for value in list(values):
-            usuario_agrupado_sig_usuario = {
-                'sig_usuario': checa_chave_e_retorna_mesma_string('sig_usuario', usuario_agrupado_sig_usuario, value),
-                'email': checa_chave_e_retorna_mesma_string('email', usuario_agrupado_sig_usuario, value),
-                'sistema': checa_chave_e_add_lista('sistema', usuario_agrupado_sig_usuario, value),
-                'ambiente': checa_chave_e_add_lista('ambiente', usuario_agrupado_sig_usuario, value),
-                'perfil': checa_chave_e_add_lista('perfil', usuario_agrupado_sig_usuario, value),
-            }
-            usuario_agrupado_sig_usuario_list.append(usuario_agrupado_sig_usuario)
-
-    chave_email = operator.itemgetter("email")
-    group_email = sorted(usuario_agrupado_sig_usuario_list, key=chave_email)
-    usuario_agrupado_email_list = []
-    for key, values in groupby(group_email, chave_email):
-        if key == '':
-            for value in list(values):
-                usuario_agrupado_email_list.append(value)
-            continue
-
-        usuario_agrupado_sig_usuario = {}
-        for value in list(values):
-            usuario_agrupado_sig_usuario = {
-                'sig_usuario': checa_chave_e_retorna_mesma_string('sig_usuario', usuario_agrupado_sig_usuario, value),
-                'email': checa_chave_e_retorna_mesma_string('email', usuario_agrupado_sig_usuario, value),
-                'sistema': checa_chave_e_add_lista('sistema', usuario_agrupado_sig_usuario, value),
-                'ambiente': checa_chave_e_add_lista('ambiente', usuario_agrupado_sig_usuario, value),
-                'perfil': checa_chave_e_add_lista('perfil', usuario_agrupado_sig_usuario, value),
-            }
-            usuario_agrupado_email_list.append(usuario_agrupado_sig_usuario)
-
-    return usuario_agrupado_email_list
 
 
 def checa_chave_e_retorna_mesma_string(chave: str, dicionario_alvo: dict, dicionario_recurso: dict):
@@ -165,3 +118,39 @@ def agrupa_lista_por_email_sig_usuario(usuarios_list: list[dict]) -> list[dict]:
         usuarios_agrupado_list.append(usuario_final)
 
     return usuarios_agrupado_list
+
+
+def filtrar_usuarios_corp_web_dados_completos(usuarios_corp_web: list[dict], url: str) -> list[dict]:
+    usuarios_dados_incompletos = []
+    usuarios_dados_completos = []
+
+    for usuario in usuarios_corp_web:
+
+        url_parametrizada = f'{url}{usuario["login_gestor"]}'
+
+        response = request_rest_get_base(url_parametrizada)
+
+        if not usuario['login_gestor'] or not usuario['colaboradores']:
+
+            usuarios_dados_incompletos.append(usuario)
+
+        elif not usuario['email_gestor'] or not usuario['nom_gestor']:
+
+            if response is None:
+                usuarios_dados_incompletos.append(usuario)
+
+            elif not usuario['email_gestor']:
+                usuario['email_gestor'] = response['mail']
+                usuarios_dados_completos.append(usuario)
+
+            elif not usuario['nom_gestor']:
+                usuario['nom_gestor'] = response['displayName']
+                usuarios_dados_completos.append(usuario)
+            else:
+                usuarios_dados_completos.append(usuario)
+        else:
+            usuarios_dados_completos.append(usuario)
+
+    cria_csv_gestores_corp_web_dados_invalidos(usuarios_dados_incompletos)
+
+    return usuarios_dados_completos
