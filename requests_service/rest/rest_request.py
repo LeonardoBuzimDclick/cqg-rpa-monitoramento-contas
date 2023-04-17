@@ -187,7 +187,7 @@ def buscar_usuarios_grupos_associados_top(url: str):
                                'email': usuario['email'].upper() if usuario['email'] else '',
                                'sistema': 'TOP',
                                'ambiente': 'TOP',
-                               'perfil': perfils_consolidados
+                               'perfil': json.dumps(perfils_consolidados)
                                }
 
         usuarios_consolidados.append(usuario_consolidado)

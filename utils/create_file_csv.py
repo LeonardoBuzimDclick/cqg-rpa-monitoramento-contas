@@ -18,7 +18,7 @@ def criar_arquivo_csv(list_rows: list[dict], filename: str) -> None:
     for chave, value in list_rows[0].items():
         header.append(chave)
 
-    with open(filename, mode='w', newline='') as filecsv:
+    with open(filename, mode='w', encoding='utf-8', newline='') as filecsv:
         writer = csv.DictWriter(f=filecsv, fieldnames=header, delimiter=';')
         writer.writeheader()
         writer.writerows(list_rows)

@@ -182,7 +182,6 @@ def enviar_gestores_colaboradores_fluig(gestores_colab_list: list[dict]):
 
             gestores_invalidos.append(gestor_colab)
 
-            print(envelope)
         else:
             logging.info(
                 f'o usuario {gestor_colab["login_gestor"]} foi para o fluig')

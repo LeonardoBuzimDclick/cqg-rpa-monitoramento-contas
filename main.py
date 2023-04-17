@@ -8,7 +8,7 @@ from requests_service.mail.send_email import send_email
 from requests_service.main_request_ambientes import busca_usuarios_ativos_nos_ambientes
 from requests_service.rest.rest_request import busca_gestores_colaboradores_corp_web_checa_arquivo_consolidado
 from requests_service.soap.soap_request import enviar_gestores_colaboradores_fluig
-from utils.create_file_csv import cria_csv_gestores_colab_fora_corpweb
+from utils.create_file_csv import cria_csv_gestores_colab_fora_corpweb, deletar_todos_arquivos_csv
 from utils.listas_utils import filtrar_usuarios_corp_web_dados_completos
 
 
@@ -17,6 +17,9 @@ def metodo_principal_execucao():
     Esta função executa o monitoramento de contas.
     """
     ajusta_config_logging()
+    if sys.argv[2] == 'True':
+        deletar_todos_arquivos_csv()
+
     logging.info('-----Inicio do metodo principal de execucao-----')
     data_ini = datetime.now()
     config_app = busca_valor_yaml()
