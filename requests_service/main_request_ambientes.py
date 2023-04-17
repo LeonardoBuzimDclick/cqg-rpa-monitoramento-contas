@@ -36,7 +36,7 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> bool:
 
     except Exception as e:
         sca_ok = False
-        logging.warning(e)
+        logging.exception(e)
 
     protheus_ok = False
     try:
@@ -64,7 +64,7 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> bool:
 
     except Exception as e:
         protheus_ok = False
-        logging.warning(e)
+        logging.exception(e)
 
     fluig_ok = False
     try:
@@ -93,7 +93,7 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> bool:
         fluig_ok = True
     except Exception as e:
         fluig_ok = False
-        logging.warning(e)
+        logging.exception(e)
 
     rm_ok = False
     try:
@@ -125,7 +125,7 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> bool:
         rm_ok = True
     except Exception as e:
         rm_ok = False
-        logging.warning(e)
+        logging.exception(e)
 
     top_ok = False
     try:
@@ -142,7 +142,7 @@ def busca_usuarios_ativos_nos_ambientes(config: dict) -> bool:
 
     except Exception as e:
         top_ok = False
-        logging.warning(e)
+        logging.exception(e)
 
     logging.info('-----Termino da fase 1 [coleta]-----')
     return sca_ok and protheus_ok and fluig_ok and rm_ok and top_ok
