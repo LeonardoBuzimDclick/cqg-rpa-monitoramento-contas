@@ -230,7 +230,7 @@ def obter_gestores_seus_colaboradores_associados(url: str, tenant: str) -> list:
                 'sig_usuario': '' if not colaborador['sig_usuario'] else colaborador['sig_usuario'].upper(),
                 'email': '' if not colaborador['email'] else colaborador['email'].upper(),
                 'nom_usuario': '' if not colaborador['nome'] else colaborador['nome'].upper(),
-                'area_colaborador': '' if not colaborador['funcao'] else colaborador['funcao'].upper(),
+                'area_colaborador': '' if not colaborador['dsc_centro_custo'] else colaborador['dsc_centro_custo'],
                 'cc_colaborador': '' if not colaborador['cod_centro_custo'] else colaborador['cod_centro_custo'],
                 'dsc_cc_colaborador': '' if not colaborador['dsc_centro_custo'] else colaborador['dsc_centro_custo']
             }
