@@ -1,3 +1,3 @@
 cd "C:\cqg-rpa-monitoramento-contas\"
 pip install -r .\requirements.txt
-python main.py hml False
+python main.py prod False
